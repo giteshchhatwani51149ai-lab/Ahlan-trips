@@ -177,7 +177,7 @@ if (searchBtn) {
       return; 
     }
 
-    const whatsappNumber = "917425995556";
+    const whatsappNumber = "21627764593";
     let message = `Hello Ahlan-Trips Team,\n\nI'd like to book a flight:\n`;
     message += `🛫 Trip Type: ${tripType}\n`;
     message += `📍 From: ${from}\n`;
@@ -270,7 +270,7 @@ if (enquiryForm) {
 
     if (!name || !email || !message) return;
 
-    const recipient = "bhaveshchhatwani92@gmail.com";
+    const recipient = "bhavesh.chhatwani@ahlan-trips.com";
     const subject = `Ahlan-Trips Enquiry: ${name} (${company})`;
     
     let body = `Hello Ahlan-Trips Team,\n\n`;
@@ -309,7 +309,7 @@ const faqAnswers = {
   pricing:  'Our pricing is tailored to the size and complexity of your travel program. Contact us for a custom quote.',
   events:   'Yes — from venue sourcing and contracting to on-site event management and logistics for global MICE programs.',
   platform: 'Our platform includes online booking, policy guardrails, traveler tracking, spend analytics, executive dashboards, and HR/ERP integrations.',
-  other:    'Please use our contact form or reach us on WhatsApp at +91 74259 95556 for any other enquiries.',
+  other:    'Please use our contact form or reach us on WhatsApp at +216 27764593 for any other enquiries.',
 };
 if (faqToggle && faqPanel) {
   faqToggle.addEventListener('click', (e) => {
