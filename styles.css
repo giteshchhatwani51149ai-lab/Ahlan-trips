@@ -799,6 +799,40 @@ select {
   color: #ffffff;
 }
 
+/* Language Switcher */
+.lang-switcher select {
+  padding: 0.5rem 2rem 0.5rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg) url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>') no-repeat right 0.5rem center / 16px;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--text-dark);
+}
+html[dir="rtl"] .lang-switcher select {
+  padding: 0.5rem 1rem 0.5rem 2rem;
+  background-position: left 0.5rem center;
+}
+html[dir="rtl"] .search-field input,
+html[dir="rtl"] .search-field select {
+  padding: 0.7rem 2.25rem 0.7rem 0.875rem;
+}
+html[dir="rtl"] .search-field-icon {
+  left: auto;
+  right: 0.7rem;
+}
+html[dir="rtl"] .search-row-bottom button svg {
+  margin-right: 0 !important;
+  margin-left: 8px !important;
+}
+html[dir="rtl"] .nav-actions {
+  flex-direction: row-reverse;
+}
+
 .service-title {
   font-size: 1.05rem;
   font-weight: 700;
