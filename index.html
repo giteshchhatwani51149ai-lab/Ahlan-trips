@@ -42,12 +42,16 @@
       </nav>
 
       <div class="nav-actions">
-        <div class="lang-switcher">
-          <select id="lang-select" aria-label="Select Language">
-            <option value="en">English</option>
-            <option value="ar">العربية</option>
-            <option value="fr">Français</option>
-          </select>
+        <div class="lang-switcher" id="custom-lang-switcher">
+          <button class="lang-switcher-btn" id="lang-switcher-btn" aria-haspopup="listbox" aria-expanded="false">
+            <span class="lang-switcher-text" id="lang-switcher-text">English</span>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </button>
+          <ul class="lang-switcher-dropdown" id="lang-switcher-dropdown" role="listbox">
+            <li role="option" data-value="en" class="active">English</li>
+            <li role="option" data-value="ar">العربية</li>
+            <li role="option" data-value="fr">Français</li>
+          </ul>
         </div>
         <a href="#contact" class="btn btn-secondary" id="nav-talk-sales">Talk to Sales</a>
         <a href="#contact" class="btn btn-black" id="nav-get-started">Get Started</a>

@@ -335,17 +335,54 @@ const elementMapping = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-  const langSelect = document.getElementById('lang-select');
-  if (!langSelect) return;
+  const langSwitcher = document.getElementById('custom-lang-switcher');
+  const langBtn = document.getElementById('lang-switcher-btn');
+  const langText = document.getElementById('lang-switcher-text');
+  const langDropdown = document.getElementById('lang-switcher-dropdown');
+
+  if (!langSwitcher) return;
 
   const savedLang = localStorage.getItem('ahlan_lang') || 'en';
-  langSelect.value = savedLang;
+  
+  const updateDropdownUI = (lang) => {
+    const options = langDropdown.querySelectorAll('li');
+    options.forEach(opt => {
+      opt.classList.remove('active');
+      if (opt.dataset.value === lang) {
+        opt.classList.add('active');
+        langText.textContent = opt.textContent;
+      }
+    });
+  };
+
+  updateDropdownUI(savedLang);
   applyLanguage(savedLang);
 
-  langSelect.addEventListener('change', (e) => {
-    const lang = e.target.value;
-    localStorage.setItem('ahlan_lang', lang);
-    applyLanguage(lang);
+  // Toggle Dropdown
+  langBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    langSwitcher.classList.toggle('open');
+    langBtn.setAttribute('aria-expanded', langSwitcher.classList.contains('open'));
+  });
+
+  // Handle Selection
+  langDropdown.querySelectorAll('li').forEach(item => {
+    item.addEventListener('click', () => {
+      const lang = item.dataset.value;
+      localStorage.setItem('ahlan_lang', lang);
+      updateDropdownUI(lang);
+      applyLanguage(lang);
+      langSwitcher.classList.remove('open');
+      langBtn.setAttribute('aria-expanded', 'false');
+    });
+  });
+
+  // Close when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!langSwitcher.contains(e.target)) {
+      langSwitcher.classList.remove('open');
+      langBtn.setAttribute('aria-expanded', 'false');
+    }
   });
 
   function applyLanguage(lang) {
