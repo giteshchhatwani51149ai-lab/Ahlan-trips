@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "ahlantrips",
+  "name": "wispy-hall-1962",
   "compatibility_date": "2026-04-20",
   "observability": {
     "enabled": true
