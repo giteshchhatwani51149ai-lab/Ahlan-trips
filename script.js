@@ -4,10 +4,28 @@
 
 'use strict';
 
-/* ----- STICKY HEADER SHADOW ----- */
+/* ----- STICKY HEADER SHADOW + SCROLL PROGRESS ----- */
 const header = document.getElementById('site-header');
+const scrollProgressBar = document.getElementById('scroll-progress-bar');
+const heroParallax = document.getElementById('hero-parallax');
+
 const onScroll = () => {
-  header.classList.toggle('scrolled', window.scrollY > 10);
+  const scrollY = window.scrollY;
+  
+  // Header shadow
+  header.classList.toggle('scrolled', scrollY > 10);
+  
+  // Scroll progress bar
+  if (scrollProgressBar) {
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    const scrollPercent = (scrollY / docHeight) * 100;
+    scrollProgressBar.style.width = scrollPercent + '%';
+  }
+  
+  // Hero parallax effect
+  if (heroParallax && scrollY < window.innerHeight) {
+    heroParallax.style.transform = `translateY(${scrollY * 0.4}px)`;
+  }
 };
 window.addEventListener('scroll', onScroll, { passive: true });
 
@@ -91,8 +109,15 @@ function initAutocomplete(inputId, resultsId) {
   });
 }
 
-initAutocomplete('s-from', 's-from-results');
-initAutocomplete('s-to', 's-to-results');
+// Initialize autocomplete for the first row
+initAutocomplete('s-from-0', 's-from-results-0');
+initAutocomplete('s-to-0', 's-to-results-0');
+
+// Function to initialize autocomplete for dynamically added rows
+function initRowAutocomplete(rowIndex) {
+  initAutocomplete(`s-from-${rowIndex}`, `s-from-results-${rowIndex}`);
+  initAutocomplete(`s-to-${rowIndex}`, `s-to-results-${rowIndex}`);
+}
 
 /* ----- MOBILE NAV TOGGLE ----- */
 const navToggle = document.getElementById('nav-toggle');
@@ -142,56 +167,197 @@ const activateLink = () => {
 };
 window.addEventListener('scroll', activateLink, { passive: true });
 
-/* ----- SEARCH TABS ----- */
-const searchTabs  = document.querySelectorAll('.search-tab');
-const returnField = document.getElementById('s-return');
-if (returnField) {
+/* ----- FLIGHT SEARCH FUNCTIONALITY ----- */
+const searchTabs = document.querySelectorAll('.search-tab');
+const returnFieldContainer = document.getElementById('return-field-container');
+const addCityContainer = document.getElementById('add-city-container');
+const flightRowsContainer = document.getElementById('flight-rows-container');
+const addCityBtn = document.getElementById('add-city-btn');
+let cityRowCounter = 1;
+
+// Trip type handling
+function setTripType(type) {
+  // Update active tab
   searchTabs.forEach(tab => {
-    tab.addEventListener('click', () => {
-      searchTabs.forEach(t => t.classList.remove('active'));
-      tab.classList.add('active');
-      const isReturn = tab.id === 'tab-return';
-      returnField.closest('.search-field').style.opacity = isReturn ? '1' : '0.4';
-      returnField.disabled = !isReturn;
-    });
+    tab.classList.toggle('active', tab.dataset.type === type);
   });
+
+  // Handle return field visibility
+  if (returnFieldContainer) {
+    returnFieldContainer.classList.toggle('visible', type === 'return');
+  }
+
+  // Handle multi-city add button
+  if (addCityContainer) {
+    addCityContainer.style.display = type === 'multicity' ? 'block' : 'none';
+  }
+
+  // Handle flight rows for multi-city
+  let rows = flightRowsContainer.querySelectorAll('.flight-row');
+  if (type === 'multicity') {
+    // Ensure at least 2 rows for multi-city
+    if (rows.length === 1) {
+      addCityRow();
+    }
+  } else {
+    // Reset to single row for one-way/return
+    while (rows.length > 1) {
+      rows[rows.length - 1].remove();
+      rows = flightRowsContainer.querySelectorAll('.flight-row');
+    }
+    // Reset row counter
+    cityRowCounter = 1;
+  }
 }
 
-/* ----- SEARCH FLIGHTS BTN (WhatsApp Redirect) ----- */
+// Add city row for multi-city
+function addCityRow() {
+  const rowIndex = cityRowCounter++;
+  const row = document.createElement('div');
+  row.className = 'flight-row';
+  row.dataset.row = rowIndex;
+  row.innerHTML = `
+    <div class="search-fields">
+      <div class="search-field">
+        <label for="s-from-${rowIndex}">From</label>
+        <div class="search-field-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10" />
+            <circle cx="12" cy="12" r="3" />
+          </svg>
+        </div>
+        <input type="text" id="s-from-${rowIndex}" placeholder="City or airport" autocomplete="off" class="s-from" />
+        <div class="autocomplete-results" id="s-from-results-${rowIndex}"></div>
+      </div>
+      <div class="search-field">
+        <label for="s-to-${rowIndex}">To</label>
+        <div class="search-field-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
+            <circle cx="12" cy="10" r="3" />
+          </svg>
+        </div>
+        <input type="text" id="s-to-${rowIndex}" placeholder="City or airport" autocomplete="off" class="s-to" />
+        <div class="autocomplete-results" id="s-to-results-${rowIndex}"></div>
+      </div>
+    </div>
+    <div class="search-row-bottom">
+      <div class="search-field">
+        <label for="s-depart-${rowIndex}">Depart</label>
+        <div class="search-field-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="2" />
+            <line x1="16" y1="2" x2="16" y2="6" />
+            <line x1="8" y1="2" x2="8" y2="6" />
+            <line x1="3" y1="10" x2="21" y2="10" />
+          </svg>
+        </div>
+        <input type="date" id="s-depart-${rowIndex}" class="s-depart" />
+      </div>
+      <button type="button" class="btn btn-secondary remove-city-btn" style="padding: 0.7rem;" onclick="this.closest('.flight-row').remove()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+  `;
+  flightRowsContainer.appendChild(row);
+
+  // Initialize autocomplete for the new row
+  initRowAutocomplete(rowIndex);
+}
+
+// Tab click handlers
+searchTabs.forEach(tab => {
+  tab.addEventListener('click', () => {
+    setTripType(tab.dataset.type);
+  });
+});
+
+// Add city button handler
+if (addCityBtn) {
+  addCityBtn.addEventListener('click', addCityRow);
+}
+
+/* ----- SEARCH FLIGHTS BTN (Email) ----- */
 const searchBtn = document.getElementById('search-flights-btn');
 if (searchBtn) {
-  searchBtn.addEventListener('click', () => {
-    const from = document.getElementById('s-from').value.trim();
-    const to   = document.getElementById('s-to').value.trim();
-    const depart = document.getElementById('s-depart').value;
-    const ret    = document.getElementById('s-return').value;
-    
+  searchBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+
     // Get active trip type
     const activeTab = document.querySelector('.search-tab.active');
-    const tripType = activeTab ? activeTab.textContent.trim() : 'Flight Enquiry';
+    const tripType = activeTab ? activeTab.textContent.trim() : 'One Way';
 
-    if (!from || !to || !depart) { 
-      if (!from) document.getElementById('s-from').focus();
-      else if (!to) document.getElementById('s-to').focus();
-      else document.getElementById('s-depart').focus();
-      return; 
+    // Collect all flight data
+    const rows = flightRowsContainer.querySelectorAll('.flight-row');
+    const flightData = [];
+    let isValid = true;
+    let firstEmptyField = null;
+
+    rows.forEach((row, index) => {
+      const from = row.querySelector('.s-from').value.trim();
+      const to = row.querySelector('.s-to').value.trim();
+      const depart = row.querySelector('.s-depart').value;
+
+      if (!from || !to || !depart) {
+        isValid = false;
+        if (!firstEmptyField) {
+          if (!from) firstEmptyField = row.querySelector('.s-from');
+          else if (!to) firstEmptyField = row.querySelector('.s-to');
+          else firstEmptyField = row.querySelector('.s-depart');
+        }
+      }
+
+      flightData.push({
+        segment: index + 1,
+        from: from,
+        to: to,
+        depart: depart
+      });
+    });
+
+    // Get return date if applicable
+    const returnDate = document.getElementById('s-return').value;
+
+    // Validate
+    if (!isValid) {
+      if (firstEmptyField) firstEmptyField.focus();
+      return;
     }
 
-    const whatsappNumber = "21627764593";
-    let message = `Hello Ahlan-Trips Team,\n\nI'd like to book a flight:\n`;
-    message += `🛫 Trip Type: ${tripType}\n`;
-    message += `📍 From: ${from}\n`;
-    message += `📍 To: ${to}\n`;
-    message += `📅 Departure: ${depart}`;
-    
-    if (ret && !document.getElementById('s-return').disabled) {
-      message += `\n📅 Return: ${ret}`;
+    // Build email body
+    let emailBody = `Hello Ahlan-Trips Team,\n\nI'd like to book a flight:\n\n`;
+    emailBody += `Trip Type: ${tripType}\n\n`;
+
+    let itemNum = 1;
+    flightData.forEach((flight) => {
+      if (flightData.length > 1) {
+        emailBody += `Flight ${flight.segment}:\n`;
+      }
+      emailBody += `  ${itemNum++}. From: ${flight.from}\n`;
+      emailBody += `  ${itemNum++}. To: ${flight.to}\n`;
+      emailBody += `  ${itemNum++}. Departure: ${flight.depart}\n`;
+      if (flightData.length > 1) emailBody += `\n`;
+    });
+
+    if (tripType === 'Return' && returnDate) {
+      emailBody += `  ${itemNum++}. Return: ${returnDate}\n`;
     }
 
-    const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodedMessage}`;
-    
-    window.open(whatsappUrl, '_blank');
+    emailBody += `\nPlease contact me with available options.\n\nThank you!`;
+
+    // Send email
+    const emailTo = 'bhavesh.chhatwani@ahlan-trips.com';
+    const subject = `Flight Booking Request - ${tripType}`;
+    const mailtoUrl = `mailto:${emailTo}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(emailBody)}`;
+
+    window.location.href = mailtoUrl;
   });
 }
 
@@ -201,7 +367,8 @@ const fadeObserver = new IntersectionObserver((entries) => {
   entries.forEach(entry => {
     if (entry.isIntersecting) {
       entry.target.classList.add('visible');
-      fadeObserver.unobserve(entry.target);
+    } else {
+      entry.target.classList.remove('visible');
     }
   });
 }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
@@ -337,4 +504,200 @@ if (faqToggle && faqPanel) {
 /* ----- FOOTER YEAR ----- */
 const yearEl = document.getElementById('year');
 if (yearEl) yearEl.textContent = new Date().getFullYear();
+
+/* ----- FOOTER WAVE ANIMATION ----- */
+(function() {
+  const canvas = document.getElementById('footer-wave');
+  if (!canvas) return;
+
+  const ctx = canvas.getContext('2d');
+  let width, height;
+  let particles = [];
+  const particleCount = 80;
+  const connectionDistance = 100;
+  const maxConnections = 3;
+
+  function resize() {
+    const footer = canvas.parentElement;
+    width = footer.offsetWidth;
+    height = footer.offsetHeight;
+    canvas.width = width;
+    canvas.height = height;
+  }
+
+  function createParticles() {
+    particles = [];
+    for (let i = 0; i < particleCount; i++) {
+      particles.push({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        vx: (Math.random() - 0.5) * 0.5,
+        vy: (Math.random() - 0.5) * 0.5,
+        radius: Math.random() * 2 + 1
+      });
+    }
+  }
+
+  function drawParticles() {
+    ctx.clearRect(0, 0, width, height);
+
+    // Update and draw particles
+    particles.forEach((p, i) => {
+      // Update position
+      p.x += p.vx;
+      p.y += p.vy;
+
+      // Bounce off edges
+      if (p.x < 0 || p.x > width) p.vx *= -1;
+      if (p.y < 0 || p.y > height) p.vy *= -1;
+
+      // Draw particle
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255, 107, 0, 0.6)';
+      ctx.fill();
+
+      // Draw connections
+      let connections = 0;
+      for (let j = i + 1; j < particles.length; j++) {
+        const p2 = particles[j];
+        const dx = p.x - p2.x;
+        const dy = p.y - p2.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        if (dist < connectionDistance && connections < maxConnections) {
+          ctx.beginPath();
+          ctx.moveTo(p.x, p.y);
+          ctx.lineTo(p2.x, p2.y);
+          const opacity = (1 - dist / connectionDistance) * 0.3;
+          ctx.strokeStyle = `rgba(255, 107, 0, ${opacity})`;
+          ctx.lineWidth = 1;
+          ctx.stroke();
+          connections++;
+        }
+      }
+    });
+
+    requestAnimationFrame(drawParticles);
+  }
+
+  function init() {
+    resize();
+    createParticles();
+    drawParticles();
+  }
+
+  window.addEventListener('resize', () => {
+    resize();
+    createParticles();
+  });
+
+  // Initialize when footer is visible
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        init();
+        observer.disconnect();
+      }
+    });
+  }, { threshold: 0.1 });
+
+  observer.observe(canvas);
+})();
+
+/* ----- MOUSE PARALLAX FOR FLOATING ELEMENTS ----- */
+(function() {
+  const heroSection = document.querySelector('.hero-section');
+  const floatItems = document.querySelectorAll('.float-item');
+  if (!heroSection || floatItems.length === 0) return;
+
+  let mouseX = 0, mouseY = 0;
+  let currentX = 0, currentY = 0;
+
+  heroSection.addEventListener('mousemove', (e) => {
+    const rect = heroSection.getBoundingClientRect();
+    mouseX = (e.clientX - rect.left - rect.width / 2) / 30;
+    mouseY = (e.clientY - rect.top - rect.height / 2) / 30;
+  }, { passive: true });
+
+  function animate() {
+    currentX += (mouseX - currentX) * 0.05;
+    currentY += (mouseY - currentY) * 0.05;
+
+    floatItems.forEach((item, index) => {
+      const factor = (index + 1) * 0.5;
+      item.style.transform = `translate(${currentX * factor}px, ${currentY * factor}px)`;
+    });
+
+    requestAnimationFrame(animate);
+  }
+  animate();
+})();
+
+/* ----- TRUST SECTION PULSE ANIMATION ----- */
+(function() {
+  const trustItems = document.querySelectorAll('.trust-item');
+  if (trustItems.length === 0) return;
+
+  const trustObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        trustItems.forEach((item, index) => {
+          setTimeout(() => {
+            item.style.transform = 'scale(1.02)';
+            setTimeout(() => {
+              item.style.transform = 'scale(1)';
+            }, 200);
+          }, index * 100);
+        });
+      }
+    });
+  }, { threshold: 0.5 });
+
+  trustItems.forEach(item => trustObserver.observe(item));
+})();
+
+/* ----- SOLUTIONS DASHBOARD TILT EFFECT ----- */
+(function() {
+  const dashboard = document.querySelector('.solutions-dashboard');
+  if (!dashboard) return;
+
+  dashboard.addEventListener('mousemove', (e) => {
+    const rect = dashboard.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+    const rotateX = (y - centerY) / 20;
+    const rotateY = (centerX - x) / 20;
+
+    dashboard.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.02)`;
+  });
+
+  dashboard.addEventListener('mouseleave', () => {
+    dashboard.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale(1)';
+  });
+})();
+
+/* ----- SMOOTH SCROLL FOR ANCHOR LINKS ----- */
+(function() {
+  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function(e) {
+      const href = this.getAttribute('href');
+      if (href === '#') return;
+      
+      const target = document.querySelector(href);
+      if (target) {
+        e.preventDefault();
+        const headerHeight = document.getElementById('site-header')?.offsetHeight || 0;
+        const targetPosition = target.getBoundingClientRect().top + window.scrollY - headerHeight;
+        
+        window.scrollTo({
+          top: targetPosition,
+          behavior: 'smooth'
+        });
+      }
+    });
+  });
+})();
 

@@ -44,8 +44,9 @@
       <div class="nav-actions">
         <div class="lang-switcher" id="custom-lang-switcher">
           <button class="lang-switcher-btn" id="lang-switcher-btn" aria-haspopup="listbox" aria-expanded="false">
+            <svg class="lang-icon-globe" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
             <span class="lang-switcher-text" id="lang-switcher-text">English</span>
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            <svg class="lang-icon-chevron" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
           </button>
           <ul class="lang-switcher-dropdown" id="lang-switcher-dropdown" role="listbox">
             <li role="option" data-value="en" class="active">English</li>
@@ -59,14 +60,47 @@
     </div>
   </header>
 
+  <!-- Scroll Progress Bar -->
+  <div class="scroll-progress" aria-hidden="true">
+    <div class="scroll-progress-bar" id="scroll-progress-bar"></div>
+  </div>
+
   <main id="home">
 
     <!-- ============================================================
            HERO SECTION
       ============================================================ -->
     <section class="hero-section" aria-label="Hero — Corporate Travel Management">
-      <!-- Subtle travel background texture -->
-      <div class="hero-bg-image" aria-hidden="true"></div>
+      <!-- Subtle travel background texture with parallax -->
+      <div class="hero-bg-image" aria-hidden="true" id="hero-parallax"></div>
+      
+      <!-- Floating Travel Elements -->
+      <div class="floating-elements" aria-hidden="true">
+        <div class="float-item float-plane">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M2 12h20M2 12l5-5m-5 5l5 5M22 12l-5-5m5 5l-5 5"/>
+          </svg>
+        </div>
+        <div class="float-item float-location">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/>
+            <circle cx="12" cy="10" r="3"/>
+          </svg>
+        </div>
+        <div class="float-item float-globe">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/>
+          </svg>
+        </div>
+        <div class="float-item float-suitcase">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <rect x="6" y="3" width="12" height="18" rx="2"/>
+            <path d="M12 3v18M2 10h20"/>
+          </svg>
+        </div>
+      </div>
+      
       <div class="container">
         <div class="hero-inner">
 
@@ -95,65 +129,87 @@
           <!-- Right: Flight Search Box -->
           <div class="flight-search-box fade-up fade-up-delay-2" role="search" aria-label="Flight search">
             <div class="search-tabs" role="tablist">
-              <button class="search-tab active" role="tab" id="tab-oneway">One Way</button>
-              <button class="search-tab" role="tab" id="tab-return">Return</button>
-              <button class="search-tab" role="tab" id="tab-multi">Multi-City</button>
+              <button class="search-tab active" role="tab" id="tab-oneway" data-type="oneway">One Way</button>
+              <button class="search-tab" role="tab" id="tab-return" data-type="return">Return</button>
+              <button class="search-tab" role="tab" id="tab-multi" data-type="multicity">Multi-City</button>
             </div>
 
-            <div class="search-fields">
-              <div class="search-field">
-                <label for="s-from">From</label>
-                <div class="search-field-icon">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="10" />
-                    <circle cx="12" cy="12" r="3" />
-                  </svg>
+            <!-- Single/Multi City Rows Container -->
+            <div id="flight-rows-container">
+              <!-- Default single row for One Way/Return -->
+              <div class="flight-row" data-row="0">
+                <div class="search-fields">
+                  <div class="search-field">
+                    <label for="s-from-0">From</label>
+                    <div class="search-field-icon">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10" />
+                        <circle cx="12" cy="12" r="3" />
+                      </svg>
+                    </div>
+                    <input type="text" id="s-from-0" placeholder="City or airport" autocomplete="off" class="s-from" />
+                    <div class="autocomplete-results" id="s-from-results-0"></div>
+                  </div>
+                  <div class="search-field">
+                    <label for="s-to-0">To</label>
+                    <div class="search-field-icon">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
+                        <circle cx="12" cy="10" r="3" />
+                      </svg>
+                    </div>
+                    <input type="text" id="s-to-0" placeholder="City or airport" autocomplete="off" class="s-to" />
+                    <div class="autocomplete-results" id="s-to-results-0"></div>
+                  </div>
                 </div>
-                <input type="text" id="s-from" placeholder="City or airport" autocomplete="off" />
-                <div class="autocomplete-results" id="s-from-results"></div>
-              </div>
-              <div class="search-field">
-                <label for="s-to">To</label>
-                <div class="search-field-icon">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
-                    <circle cx="12" cy="10" r="3" />
-                  </svg>
+
+                <div class="search-row-bottom">
+                  <div class="search-field">
+                    <label for="s-depart-0">Depart</label>
+                    <div class="search-field-icon">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="4" width="18" height="18" rx="2" />
+                        <line x1="16" y1="2" x2="16" y2="6" />
+                        <line x1="8" y1="2" x2="8" y2="6" />
+                        <line x1="3" y1="10" x2="21" y2="10" />
+                      </svg>
+                    </div>
+                    <input type="date" id="s-depart-0" class="s-depart" />
+                  </div>
+                  <div class="search-field return-field" id="return-field-container">
+                    <label for="s-return">Return</label>
+                    <div class="search-field-icon">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="4" width="18" height="18" rx="2" />
+                        <line x1="16" y1="2" x2="16" y2="6" />
+                        <line x1="8" y1="2" x2="8" y2="6" />
+                        <line x1="3" y1="10" x2="21" y2="10" />
+                      </svg>
+                    </div>
+                    <input type="date" id="s-return" />
+                  </div>
                 </div>
-                <input type="text" id="s-to" placeholder="City or airport" autocomplete="off" />
-                <div class="autocomplete-results" id="s-to-results"></div>
               </div>
             </div>
 
-            <div class="search-row-bottom">
-              <div class="search-field">
-                <label for="s-depart">Depart</label>
-                <div class="search-field-icon">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="3" y="4" width="18" height="18" rx="2" />
-                    <line x1="16" y1="2" x2="16" y2="6" />
-                    <line x1="8" y1="2" x2="8" y2="6" />
-                    <line x1="3" y1="10" x2="21" y2="10" />
-                  </svg>
-                </div>
-                <input type="date" id="s-depart" />
-              </div>
-              <div class="search-field">
-                <label for="s-return">Return</label>
-                <div class="search-field-icon">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="3" y="4" width="18" height="18" rx="2" />
-                    <line x1="16" y1="2" x2="16" y2="6" />
-                    <line x1="8" y1="2" x2="8" y2="6" />
-                    <line x1="3" y1="10" x2="21" y2="10" />
-                  </svg>
-                </div>
-                <input type="date" id="s-return" />
-              </div>
+            <!-- Add City Button for Multi-City -->
+            <div class="add-city-container" id="add-city-container" style="display: none;">
+              <button type="button" class="btn btn-secondary add-city-btn" id="add-city-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                Add Another City
+              </button>
+            </div>
+
+            <!-- Search Button at Bottom -->
+            <div class="search-button-container">
               <button class="btn btn-primary" id="search-flights-btn" style="width: 100%;">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
                   stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
@@ -250,7 +306,8 @@
         </div>
         <div class="services-grid">
 
-          <div class="service-card fade-up">
+          <div class="service-card fade-up" style="--card-bg: url('https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=400&h=300&fit=crop')">
+            <div class="service-card-bg"></div>
             <div class="service-icon">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -266,7 +323,8 @@
               ensure complete financial transparency across all travel operations.</p>
           </div>
 
-          <div class="service-card fade-up fade-up-delay-1">
+          <div class="service-card fade-up fade-up-delay-1" style="--card-bg: url('https://images.unsplash.com/photo-1560472355-536de3962603?w=400&h=300&fit=crop')">
+            <div class="service-card-bg"></div>
             <div class="service-icon">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -279,7 +337,8 @@
               leadership team — from complex itineraries to last-minute changes.</p>
           </div>
 
-          <div class="service-card fade-up fade-up-delay-2">
+          <div class="service-card fade-up fade-up-delay-2" style="--card-bg: url('https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=400&h=300&fit=crop')">
+            <div class="service-card-bg"></div>
             <div class="service-icon">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -294,7 +353,8 @@
               transportation — with negotiated rates and dedicated support for your team.</p>
           </div>
 
-          <div class="service-card fade-up">
+          <div class="service-card fade-up" style="--card-bg: url('https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&h=300&fit=crop')">
+            <div class="service-card-bg"></div>
             <div class="service-icon">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -308,7 +368,8 @@
               detailed reports to optimize costs and improve decision-making.</p>
           </div>
 
-          <div class="service-card fade-up fade-up-delay-1">
+          <div class="service-card fade-up fade-up-delay-1" style="--card-bg: url('https://images.unsplash.com/photo-1563986768609-322da13575f3?w=400&h=300&fit=crop')">
+            <div class="service-card-bg"></div>
             <div class="service-icon">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -320,7 +381,8 @@
               assessments to emergency assistance — wherever your employees travel.</p>
           </div>
 
-          <div class="service-card fade-up fade-up-delay-2">
+          <div class="service-card fade-up fade-up-delay-2" style="--card-bg: url('https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=400&h=300&fit=crop')">
+            <div class="service-card-bg"></div>
             <div class="service-icon">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -796,19 +858,119 @@
   </main>
 
   <!-- ============================================================
-         FOOTER
+         FOOTER (Enhanced Multi-Column)
     ============================================================ -->
   <footer class="site-footer">
+    <canvas id="footer-wave" class="footer-wave-canvas"></canvas>
     <div class="container">
-      <div class="footer-inner">
-        <img src="assets/footer.png?v=1" alt="Ahlan-Trips" class="footer-logo" />
-        <p class="footer-copy">© <span id="year">2026</span> Ahlan-Trips. All rights reserved. Built for modern global
-          travel programs.</p>
-        <nav class="footer-links" aria-label="Footer">
-          <a href="#services">Services</a>
-          <a href="#solutions">Solutions</a>
-          <a href="#contact">Contact</a>
-          <a href="https://wa.me/21627764593" target="_blank" rel="noopener">WhatsApp</a>
+      <!-- Main Footer Content -->
+      <div class="footer-main">
+        <!-- About Column -->
+        <div class="footer-column footer-about">
+          <div class="footer-logo-wrap">
+            <img src="assets/footer.png?v=1" alt="Ahlan-Trips" class="footer-logo" />
+          </div>
+          <p class="footer-about-text">Your trusted partner for corporate travel management. We deliver seamless travel experiences across 140+ countries with 24/7 support and negotiated rates.</p>
+          <div class="footer-social">
+            <a href="#" class="social-link" aria-label="LinkedIn">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+              </svg>
+            </a>
+            <a href="#" class="social-link" aria-label="Twitter">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
+              </svg>
+            </a>
+            <a href="#" class="social-link" aria-label="Instagram">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/>
+              </svg>
+            </a>
+            <a href="https://wa.me/21627764593" class="social-link" aria-label="WhatsApp" target="_blank" rel="noopener">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.955L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+              </svg>
+            </a>
+          </div>
+        </div>
+
+        <!-- Quick Links -->
+        <div class="footer-column">
+          <h4 class="footer-heading">Quick Links</h4>
+          <ul class="footer-links">
+            <li><a href="#home">Home</a></li>
+            <li><a href="#services">Services</a></li>
+            <li><a href="#solutions">Solutions</a></li>
+            <li><a href="#why">Why Ahlan</a></li>
+            <li><a href="#testimonials">Testimonials</a></li>
+            <li><a href="#contact">Contact</a></li>
+          </ul>
+        </div>
+
+        <!-- Services -->
+        <div class="footer-column">
+          <h4 class="footer-heading">Services</h4>
+          <ul class="footer-links">
+            <li><a href="#services">Corporate Travel</a></li>
+            <li><a href="#services">Executive Assistance</a></li>
+            <li><a href="#services">Accounting & Finance</a></li>
+            <li><a href="#services">Travel Analytics</a></li>
+            <li><a href="#services">Duty of Care</a></li>
+            <li><a href="#services">Policy Optimization</a></li>
+          </ul>
+        </div>
+
+        <!-- Global Offices -->
+        <div class="footer-column">
+          <h4 class="footer-heading">Global Offices</h4>
+          <ul class="footer-locations">
+            <li>
+              <span class="location-name">India</span>
+              <span class="location-detail">Mumbai, Delhi, Bangalore</span>
+            </li>
+            <li>
+              <span class="location-name">Europe</span>
+              <span class="location-detail">London, Paris, Frankfurt</span>
+            </li>
+            <li>
+              <span class="location-name">Middle East</span>
+              <span class="location-detail">Dubai, Riyadh, Doha</span>
+            </li>
+            <li>
+              <span class="location-name">Tunisia</span>
+              <span class="location-detail">Tunis, Sfax</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Contact -->
+        <div class="footer-column">
+          <h4 class="footer-heading">Contact Us</h4>
+          <ul class="footer-contact">
+            <li>
+              <span class="contact-label">Email</span>
+              <a href="mailto:bhavesh.chhatwani@ahlan-trips.com" class="contact-value">bhavesh.chhatwani@ahlan-trips.com</a>
+            </li>
+            <li>
+              <span class="contact-label">WhatsApp</span>
+              <a href="https://wa.me/21627764593" class="contact-value" target="_blank" rel="noopener">+216 27764593</a>
+            </li>
+            <li>
+              <span class="contact-label">Support</span>
+              <span class="contact-value">24/7 Available</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Bottom Bar -->
+      <div class="footer-bottom">
+        <p class="footer-copy">© <span id="year">2026</span> Ahlan-Trips. All rights reserved.</p>
+        <nav class="footer-legal" aria-label="Legal">
+          <a href="#">Privacy Policy</a>
+          <a href="#">Terms of Service</a>
+          <a href="#">Cookie Policy</a>
         </nav>
       </div>
     </div>
