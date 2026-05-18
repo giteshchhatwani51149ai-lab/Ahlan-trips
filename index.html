@@ -177,7 +177,7 @@
                         <line x1="3" y1="10" x2="21" y2="10" />
                       </svg>
                     </div>
-                    <input type="date" id="s-depart-0" class="s-depart" />
+                    <input type="date" id="s-depart-0" class="s-depart" placeholder="Select date" data-cal-mode="range-start" data-cal-group="main-dates" />
                   </div>
                   <div class="search-field return-field" id="return-field-container">
                     <label for="s-return">Return</label>
@@ -190,7 +190,7 @@
                         <line x1="3" y1="10" x2="21" y2="10" />
                       </svg>
                     </div>
-                    <input type="date" id="s-return" />
+                    <input type="date" id="s-return" placeholder="Select date" data-cal-mode="range-end" data-cal-group="main-dates" />
                   </div>
                 </div>
               </div>
@@ -1008,6 +1008,12 @@
 
   <script src="translations.js"></script>
   <script src="script.js"></script>
+  <script src="calendar.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      if (window.AhlanCalendar) AhlanCalendar.init();
+    });
+  </script>
 </body>
 
 </html>
