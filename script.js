@@ -463,9 +463,21 @@ if (searchBtn) {
       return;
     }
 
+    // Retrieve Cabin Class & Passenger details
+    const adults = parseInt(document.getElementById('adults-val')?.textContent || '1', 10);
+    const children = parseInt(document.getElementById('children-val')?.textContent || '0', 10);
+    const infants = parseInt(document.getElementById('infants-val')?.textContent || '0', 10);
+    const cabinClassInput = document.querySelector('input[name="cabin-class"]:checked');
+    const cabinClass = cabinClassInput ? cabinClassInput.value : 'Economy';
+
     // Build email body
     let emailBody = `Hello Ahlan-Trips Team,\n\nI'd like to book a flight:\n\n`;
-    emailBody += `Trip Type: ${tripType}\n\n`;
+    emailBody += `Trip Type: ${tripType}\n`;
+    emailBody += `Cabin Class: ${cabinClass}\n`;
+    emailBody += `Passengers: ${adults} Adult(s)`;
+    if (children > 0) emailBody += `, ${children} Child(ren)`;
+    if (infants > 0) emailBody += `, ${infants} Infant(s)`;
+    emailBody += `\n\n`;
 
     let itemNum = 1;
     flightData.forEach((flight) => {
@@ -485,7 +497,7 @@ if (searchBtn) {
     emailBody += `\nPlease contact me with available options.\n\nThank you!`;
 
     // Send email
-    const emailTo = 'bhavesh.chhatwani@ahlan-trips.com';
+    const emailTo = 'info@ahlan-trips.com';
     const subject = `Flight Booking Request - ${tripType}`;
     const mailtoUrl = `mailto:${emailTo}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(emailBody)}`;
 
@@ -569,7 +581,7 @@ if (enquiryForm) {
 
     if (!name || !email || !message) return;
 
-    const recipient = "bhavesh.chhatwani@ahlan-trips.com";
+    const recipient = "info@ahlan-trips.com";
     const subject = `Ahlan-Trips Enquiry: ${name} (${company})`;
     
     let body = `Hello Ahlan-Trips Team,\n\n`;
@@ -608,7 +620,7 @@ const faqAnswers = {
   pricing:  'Our pricing is tailored to the size and complexity of your travel program. Contact us for a custom quote.',
   events:   'Yes — from venue sourcing and contracting to on-site event management and logistics for global MICE programs.',
   platform: 'Our platform includes online booking, policy guardrails, traveler tracking, spend analytics, executive dashboards, and HR/ERP integrations.',
-  other:    'Please use our contact form or reach us on WhatsApp at +216 27764593 for any other enquiries.',
+  other:    'Please use our contact form or reach us on WhatsApp at +216 27764593 or +216 27764649 for any other enquiries.',
 };
 if (faqToggle && faqPanel) {
   faqToggle.addEventListener('click', (e) => {
@@ -831,5 +843,404 @@ if (yearEl) yearEl.textContent = new Date().getFullYear();
       }
     });
   });
+})();
+
+/* =============================================
+   AHLAN-TRIPS INTERACTIVE UI CONTROLLERS
+   ============================================= */
+(function() {
+  let currentLanguage = localStorage.getItem('ahlan_lang') || 'en';
+
+  /* -------------------------------------------
+     1. Flight Search Widget (Class & Passengers)
+     ------------------------------------------- */
+  const trigger = document.getElementById('class-passengers-trigger');
+  const popover = document.getElementById('class-passengers-popover');
+  const container = document.querySelector('.search-class-passengers-container');
+  const doneBtn = document.getElementById('class-passengers-done');
+
+  if (trigger && popover && container) {
+    // Toggle popover
+    trigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isExpanded = trigger.getAttribute('aria-expanded') === 'true';
+      trigger.setAttribute('aria-expanded', !isExpanded);
+      popover.classList.toggle('active', !isExpanded);
+    });
+
+    // Close on Done button click
+    if (doneBtn) {
+      doneBtn.addEventListener('click', () => {
+        trigger.setAttribute('aria-expanded', 'false');
+        popover.classList.remove('active');
+      });
+    }
+
+    // Close on click outside
+    document.addEventListener('click', (e) => {
+      if (!container.contains(e.target)) {
+        trigger.setAttribute('aria-expanded', 'false');
+        popover.classList.remove('active');
+      }
+    });
+
+    // Counters logic
+    const counters = {
+      adults: { valEl: document.getElementById('adults-val'), minus: document.getElementById('adults-minus'), plus: document.getElementById('adults-plus') },
+      children: { valEl: document.getElementById('children-val'), minus: document.getElementById('children-minus'), plus: document.getElementById('children-plus') },
+      infants: { valEl: document.getElementById('infants-val'), minus: document.getElementById('infants-minus'), plus: document.getElementById('infants-plus') }
+    };
+
+    function updateCounters() {
+      const adultsVal = parseInt(counters.adults.valEl.textContent, 10);
+      const childrenVal = parseInt(counters.children.valEl.textContent, 10);
+      const infantsVal = parseInt(counters.infants.valEl.textContent, 10);
+      const total = adultsVal + childrenVal + infantsVal;
+
+      // Update disabled states for minus buttons
+      counters.adults.minus.disabled = (adultsVal <= 1 || adultsVal <= infantsVal);
+      counters.children.minus.disabled = (childrenVal <= 0);
+      counters.infants.minus.disabled = (infantsVal <= 0);
+
+      // Update disabled states for plus buttons
+      const reachLimit = (total >= 9);
+      counters.adults.plus.disabled = reachLimit;
+      counters.children.plus.disabled = reachLimit;
+      counters.infants.plus.disabled = (reachLimit || infantsVal >= adultsVal);
+    }
+
+    function updatePassengerDisplay() {
+      const adultsVal = parseInt(counters.adults.valEl.textContent, 10);
+      const childrenVal = parseInt(counters.children.valEl.textContent, 10);
+      const infantsVal = parseInt(counters.infants.valEl.textContent, 10);
+      
+      const cabinClassInput = document.querySelector('input[name="cabin-class"]:checked');
+      const cabinClassValue = cabinClassInput ? cabinClassInput.value : 'Economy';
+      
+      // Get translations
+      const langData = window.translations ? (window.translations[currentLanguage] || window.translations['en']) : {};
+      
+      let classText = cabinClassValue;
+      if (cabinClassValue === 'Economy') classText = langData.lbl_opt_economy || 'Economy';
+      else if (cabinClassValue === 'Premium Economy') classText = langData.lbl_opt_premium || 'Premium Economy';
+      else if (cabinClassValue === 'Business') classText = langData.lbl_opt_business || 'Business';
+      else if (cabinClassValue === 'First') classText = langData.lbl_opt_first || 'First Class';
+
+      let adultText = '';
+      let childText = '';
+      let infantText = '';
+
+      if (currentLanguage === 'ar') {
+        adultText = adultsVal + ' ' + (langData.lbl_adults || 'بالغ');
+        childText = childrenVal > 0 ? `, ${childrenVal} ${langData.lbl_children || 'طفل'}` : '';
+        infantText = infantsVal > 0 ? `, ${infantsVal} ${langData.lbl_infants || 'رضيع'}` : '';
+      } else if (currentLanguage === 'fr') {
+        const adWord = adultsVal > 1 ? 'Adultes' : 'Adulte';
+        const chWord = childrenVal > 1 ? 'Enfants' : 'Enfant';
+        const infWord = infantsVal > 1 ? 'Bébés' : 'Bébé';
+        adultText = `${adultsVal} ${adWord}`;
+        childText = childrenVal > 0 ? `, ${childrenVal} ${chWord}` : '';
+        infantText = infantsVal > 0 ? `, ${infantsVal} ${infWord}` : '';
+      } else {
+        const adWord = adultsVal > 1 ? 'Adults' : 'Adult';
+        const chWord = childrenVal > 1 ? 'Children' : 'Child';
+        const infWord = infantsVal > 1 ? 'Infants' : 'Infant';
+        adultText = `${adultsVal} ${adWord}`;
+        childText = childrenVal > 0 ? `, ${childrenVal} ${chWord}` : '';
+        infantText = infantsVal > 0 ? `, ${infantsVal} ${infWord}` : '';
+      }
+
+      const displayEl = document.getElementById('class-passengers-display');
+      if (displayEl) {
+        displayEl.textContent = `${adultText}${childText}${infantText}, ${classText}`;
+      }
+    }
+
+    // Set up counter button event listeners
+    Object.keys(counters).forEach((key) => {
+      counters[key].minus.addEventListener('click', () => {
+        let val = parseInt(counters[key].valEl.textContent, 10);
+        if (key === 'adults' && val <= 1) return;
+        if (key !== 'adults' && val <= 0) return;
+        counters[key].valEl.textContent = --val;
+        updateCounters();
+        updatePassengerDisplay();
+      });
+
+      counters[key].plus.addEventListener('click', () => {
+        const adultsVal = parseInt(counters.adults.valEl.textContent, 10);
+        const childrenVal = parseInt(counters.children.valEl.textContent, 10);
+        const infantsVal = parseInt(counters.infants.valEl.textContent, 10);
+        if (adultsVal + childrenVal + infantsVal >= 9) return;
+        if (key === 'infants' && infantsVal >= adultsVal) return;
+        
+        let val = parseInt(counters[key].valEl.textContent, 10);
+        counters[key].valEl.textContent = ++val;
+        updateCounters();
+        updatePassengerDisplay();
+      });
+    });
+
+    // Cabin class change listener
+    document.querySelectorAll('input[name="cabin-class"]').forEach((radio) => {
+      radio.addEventListener('change', () => {
+        updatePassengerDisplay();
+      });
+    });
+
+    // Initialize
+    updateCounters();
+    updatePassengerDisplay();
+  }
+
+  /* -------------------------------------------
+     2. Testimonials Carousel
+     ------------------------------------------- */
+  const carousel = document.getElementById('testimonial-carousel');
+  if (carousel) {
+    const slides = carousel.querySelectorAll('.testimonial-slide');
+    const dots = carousel.querySelectorAll('.carousel-dots .dot');
+    const prevBtn = document.getElementById('carousel-prev');
+    const nextBtn = document.getElementById('carousel-next');
+    let currentSlide = 0;
+    let timer = null;
+
+    function showSlide(index) {
+      slides.forEach((slide) => slide.classList.remove('active'));
+      dots.forEach((dot) => dot.classList.remove('active'));
+
+      currentSlide = (index + slides.length) % slides.length;
+      slides[currentSlide].classList.add('active');
+      
+      const targetDot = carousel.querySelector(`.carousel-dots .dot[data-index="${currentSlide}"]`);
+      if (targetDot) targetDot.classList.add('active');
+    }
+
+    function nextSlide() {
+      showSlide(currentSlide + 1);
+    }
+
+    function prevSlide() {
+      showSlide(currentSlide - 1);
+    }
+
+    function startTimer() {
+      stopTimer();
+      timer = setInterval(nextSlide, 6000);
+    }
+
+    function stopTimer() {
+      if (timer) clearInterval(timer);
+    }
+
+    if (prevBtn) prevBtn.addEventListener('click', () => { prevSlide(); startTimer(); });
+    if (nextBtn) nextBtn.addEventListener('click', () => { nextSlide(); startTimer(); });
+
+    dots.forEach((dot) => {
+      dot.addEventListener('click', () => {
+        const idx = parseInt(dot.getAttribute('data-index'), 10);
+        showSlide(idx);
+        startTimer();
+      });
+    });
+
+    carousel.addEventListener('mouseenter', stopTimer);
+    carousel.addEventListener('mouseleave', startTimer);
+
+    // Initialize carousel timer
+    startTimer();
+  }
+
+  /* -------------------------------------------
+     3. FAQ Accordion
+     ------------------------------------------- */
+  const faqTriggers = document.querySelectorAll('.faq-acc-trigger');
+  faqTriggers.forEach((trigger) => {
+    trigger.addEventListener('click', () => {
+      const item = trigger.closest('.faq-acc-item');
+      const isExpanded = trigger.getAttribute('aria-expanded') === 'true';
+
+      // Close all items
+      faqTriggers.forEach((t) => {
+        t.setAttribute('aria-expanded', 'false');
+        t.closest('.faq-acc-item').classList.remove('active');
+      });
+
+      // Open clicked item if it was closed
+      if (!isExpanded) {
+        trigger.setAttribute('aria-expanded', 'true');
+        item.classList.add('active');
+      }
+    });
+  });
+
+  /* -------------------------------------------
+     4. Travel Dashboard & Map Connections
+     ------------------------------------------- */
+  const hubs = {
+    jfk: { name: 'New York (JFK)', x: 100, y: 120, label: 'JFK', country: 'USA' },
+    lhr: { name: 'London (LHR)', x: 240, y: 90, label: 'LHR', country: 'United Kingdom' },
+    cdg: { name: 'Paris (CDG)', x: 280, y: 110, label: 'CDG', country: 'France' },
+    tun: { name: 'Tunis (TUN)', x: 290, y: 160, label: 'TUN', country: 'Tunisia' },
+    dxb: { name: 'Dubai (DXB)', x: 400, y: 180, label: 'DXB', country: 'UAE' },
+    dps: { name: 'Bali (DPS)', x: 510, y: 260, label: 'DPS', country: 'Indonesia' }
+  };
+
+  const hubData = {
+    tun: {
+      en: { flightNum: "AH-160", from: "TUN (Tunis)", to: "DXB (Dubai)", time: "10:15 AM", status: "On Time", hotel: "The Sahara Sands Resort", hotelLoc: "Tunis, TN", price: "$145/night", benefits: "Free Upgrade", statusClass: "status-green" },
+      fr: { flightNum: "AH-160", from: "TUN (Tunis)", to: "DXB (Dubaï)", time: "10h15", status: "À l'heure", hotel: "The Sahara Sands Resort", hotelLoc: "Tunis, TN", price: "145$ / nuit", benefits: "Surclassement offert", statusClass: "status-green" },
+      ar: { flightNum: "AH-160", from: "TUN (تونس)", to: "DXB (دبي)", time: "10:15 صباحًا", status: "في الوقت المحدد", hotel: "The Sahara Sands Resort", hotelLoc: "تونس، تونس", price: "145$/ليلة", benefits: "ترقية مجانية", statusClass: "status-green" }
+    },
+    jfk: {
+      en: { flightNum: "UA-003", from: "JFK (New York)", to: "LHR (London)", time: "08:30 PM", status: "On Time", hotel: "The Lexington NYC", hotelLoc: "New York, USA", price: "$320/night", benefits: "Late Checkout", statusClass: "status-green" },
+      fr: { flightNum: "UA-003", from: "JFK (New York)", to: "LHR (Londres)", time: "20h30", status: "À l'heure", hotel: "The Lexington NYC", hotelLoc: "New York, USA", price: "320$ / nuit", benefits: "Départ tardif", statusClass: "status-green" },
+      ar: { flightNum: "UA-003", from: "JFK (نيويورك)", to: "LHR (لندن)", time: "08:30 مساءً", status: "في الوقت المحدد", hotel: "The Lexington NYC", hotelLoc: "نيويورك، أمريكا", price: "320$/ليلة", benefits: "مغادرة متأخرة", statusClass: "status-green" }
+    },
+    lhr: {
+      en: { flightNum: "BA-112", from: "LHR (London)", to: "CDG (Paris)", time: "11:45 AM", status: "On Time", hotel: "The London Savoy", hotelLoc: "London, UK", price: "$290/night", benefits: "Free Breakfast", statusClass: "status-green" },
+      fr: { flightNum: "BA-112", from: "LHR (Londres)", to: "CDG (Paris)", time: "11h45", status: "À l'heure", hotel: "The London Savoy", hotelLoc: "Londres, RU", price: "290$ / nuit", benefits: "Petit-déjeuner inclus", statusClass: "status-green" },
+      ar: { flightNum: "BA-112", from: "LHR (لندن)", to: "CDG (باريس)", time: "11:45 صباحًا", status: "في الوقت المحدد", hotel: "The London Savoy", hotelLoc: "لندن، بريطانيا", price: "290$/ليلة", benefits: "فطور مجاني", statusClass: "status-green" }
+    },
+    cdg: {
+      en: { flightNum: "AF-022", from: "CDG (Paris)", to: "TUN (Tunis)", time: "02:15 PM", status: "Delayed", hotel: "Hôtel Plaza Athénée", hotelLoc: "Paris, France", price: "$450/night", benefits: "VIP Lounge Access", statusClass: "status-red" },
+      fr: { flightNum: "AF-022", from: "CDG (Paris)", to: "TUN (Tunis)", time: "14h15", status: "Retardé", hotel: "Hôtel Plaza Athénée", hotelLoc: "Paris, France", price: "450$ / nuit", benefits: "Accès Salon VIP", statusClass: "status-red" },
+      ar: { flightNum: "AF-022", from: "CDG (باريس)", to: "TUN (تونس)", time: "02:15 مساءً", status: "متأخرة", hotel: "Hôtel Plaza Athénée", hotelLoc: "باريس، فرنسا", price: "450$/ليلة", benefits: "دخول صالة VIP", statusClass: "status-red" }
+    },
+    dxb: {
+      en: { flightNum: "EK-201", from: "DXB (Dubai)", to: "DPS (Bali)", time: "09:05 AM", status: "On Time", hotel: "The Palace Downtown", hotelLoc: "Dubai, UAE", price: "$380/night", benefits: "Spa Discount", statusClass: "status-green" },
+      fr: { flightNum: "EK-201", from: "DXB (Dubaï)", to: "DPS (Bali)", time: "09h05", status: "À l'heure", hotel: "The Palace Downtown", hotelLoc: "Dubaï, ÉAU", price: "380$ / nuit", benefits: "Réduction Spa", statusClass: "status-green" },
+      ar: { flightNum: "EK-201", from: "DXB (دبي)", to: "DPS (بالي)", time: "09:05 صباحًا", status: "في الوقت المحدد", hotel: "The Palace Downtown", hotelLoc: "دبي، الإمارات", price: "380$/ليلة", benefits: "خصم على السبا", statusClass: "status-green" }
+    },
+    dps: {
+      en: { flightNum: "GA-880", from: "DPS (Bali)", to: "DXB (Dubai)", time: "06:40 PM", status: "On Time", hotel: "Ayana Resort & Spa", hotelLoc: "Bali, Indonesia", price: "$210/night", benefits: "Welcome Drink", statusClass: "status-green" },
+      fr: { flightNum: "GA-880", from: "DPS (Bali)", to: "DXB (Dubaï)", time: "18h40", status: "À l'heure", hotel: "Ayana Resort & Spa", hotelLoc: "Bali, Indonésie", price: "210$ / nuit", benefits: "Boisson de bienvenue", statusClass: "status-green" },
+      ar: { flightNum: "GA-880", from: "DPS (بالي)", to: "DXB (دبي)", time: "06:40 مساءً", status: "في الوقت المحدد", hotel: "Ayana Resort & Spa", hotelLoc: "بالي، إندونيسيا", price: "210$/ليلة", benefits: "مشروب ترحيبي", statusClass: "status-green" }
+    }
+  };
+
+  let activeHubId = 'tun';
+
+  function drawConnections(activeId) {
+    const connectionsGroup = document.getElementById('map-connections');
+    if (!connectionsGroup) return;
+
+    connectionsGroup.innerHTML = '';
+    const activeHub = hubs[activeId];
+    if (!activeHub) return;
+
+    Object.entries(hubs).forEach(([id, hub]) => {
+      if (id === activeId) return;
+
+      const x1 = activeHub.x;
+      const y1 = activeHub.y;
+      const x2 = hub.x;
+      const y2 = hub.y;
+
+      const mx = (x1 + x2) / 2;
+      const my = (y1 + y2) / 2;
+      const dx = x2 - x1;
+      const dy = y2 - y1;
+
+      const cx = mx - dy * 0.18;
+      const cy = my + dx * 0.18;
+
+      const pathD = `M ${x1} ${y1} Q ${cx} ${cy} ${x2} ${y2}`;
+
+      const baseLine = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      baseLine.setAttribute('d', pathD);
+      baseLine.setAttribute('class', 'route-path');
+
+      const flowLine = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      flowLine.setAttribute('d', pathD);
+      flowLine.setAttribute('class', 'route-path-flow');
+
+      connectionsGroup.appendChild(baseLine);
+      connectionsGroup.appendChild(flowLine);
+    });
+  }
+
+  function updateHubDetails(hubId) {
+    activeHubId = hubId;
+    const hubInfo = hubData[hubId]?.[currentLanguage] || hubData[hubId]?.['en'];
+    if (!hubInfo) return;
+
+    const flightCard = document.getElementById('map-flight-card');
+    const hotelCard = document.getElementById('map-hotel-card');
+
+    if (flightCard && hotelCard) {
+      flightCard.style.animation = 'none';
+      hotelCard.style.animation = 'none';
+      flightCard.offsetHeight; // trigger reflow
+      hotelCard.offsetHeight; // trigger reflow
+      flightCard.style.animation = 'ticketFadeInUp 0.6s ease forwards';
+      hotelCard.style.animation = 'ticketFadeInUp 0.6s ease forwards 0.15s';
+    }
+
+    // Flight Card details
+    const ticketNumberEl = document.getElementById('map-ticket-number');
+    if (ticketNumberEl) ticketNumberEl.textContent = hubInfo.flightNum;
+
+    const ticketFromEl = document.getElementById('map-ticket-from');
+    if (ticketFromEl) ticketFromEl.textContent = hubInfo.from;
+
+    const ticketToEl = document.getElementById('map-ticket-to');
+    if (ticketToEl) ticketToEl.textContent = hubInfo.to;
+
+    const ticketTimeEl = document.getElementById('map-ticket-time');
+    if (ticketTimeEl) ticketTimeEl.textContent = hubInfo.time;
+
+    const ticketStateEl = document.getElementById('map-ticket-state');
+    if (ticketStateEl) {
+      ticketStateEl.textContent = hubInfo.status;
+      ticketStateEl.className = hubInfo.statusClass;
+    }
+
+    // Hotel Card details
+    const hotelNameEl = document.getElementById('map-hotel-name');
+    if (hotelNameEl) hotelNameEl.textContent = hubInfo.hotel;
+
+    const hotelLocEl = document.getElementById('map-hotel-loc');
+    if (hotelLocEl) hotelLocEl.textContent = hubInfo.hotelLoc;
+
+    const hotelPriceEl = document.getElementById('map-hotel-price');
+    if (hotelPriceEl) hotelPriceEl.textContent = hubInfo.price;
+
+    const hotelBenefitsEl = document.getElementById('map-hotel-benefits');
+    if (hotelBenefitsEl) hotelBenefitsEl.textContent = hubInfo.benefits;
+  }
+
+  const mapHubs = document.querySelectorAll('.map-hub');
+  if (mapHubs.length > 0) {
+    mapHubs.forEach((hub) => {
+      hub.addEventListener('click', () => {
+        const hubId = hub.getAttribute('data-id');
+        
+        mapHubs.forEach((h) => h.classList.remove('active'));
+        hub.classList.add('active');
+
+        drawConnections(hubId);
+        updateHubDetails(hubId);
+      });
+    });
+
+    // Initial load
+    drawConnections('tun');
+    updateHubDetails('tun');
+  }
+
+  /* -------------------------------------------
+     5. Multi-language Synchronization Event Listener
+     ------------------------------------------- */
+  window.addEventListener('ahlanLanguageChanged', (e) => {
+    currentLanguage = e.detail.lang;
+    if (trigger) {
+      updatePassengerDisplay();
+    }
+    if (mapHubs.length > 0) {
+      updateHubDetails(activeHubId);
+    }
+  });
+
 })();
 
