@@ -416,6 +416,49 @@ if (addCityBtn) {
   addCityBtn.addEventListener('click', addCityRow);
 }
 
+/* ----- TOAST NOTIFICATION HELPER ----- */
+function showToast(message, type = 'error') {
+  // Remove existing toast
+  const existing = document.getElementById('search-toast');
+  if (existing) existing.remove();
+
+  const toast = document.createElement('div');
+  toast.id = 'search-toast';
+  toast.style.cssText = `
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: ${type === 'error' ? '#ef4444' : '#22c55e'};
+    color: #fff;
+    padding: 0.85rem 1.5rem;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+    z-index: 99999;
+    opacity: 0;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    font-family: inherit;
+  `;
+  toast.textContent = message;
+  document.body.appendChild(toast);
+
+  // Animate in
+  requestAnimationFrame(() => {
+    toast.style.opacity = '1';
+    toast.style.transform = 'translateX(-50%) translateY(0)';
+  });
+
+  // Auto remove after 3.5s
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateX(-50%) translateY(20px)';
+    setTimeout(() => toast.remove(), 300);
+  }, 3500);
+}
+
 /* ----- SEARCH FLIGHTS BTN (Email) ----- */
 const searchBtn = document.getElementById('search-flights-btn');
 if (searchBtn) {
@@ -430,36 +473,61 @@ if (searchBtn) {
     const rows = flightRowsContainer.querySelectorAll('.flight-row');
     const flightData = [];
     let isValid = true;
-    let firstEmptyField = null;
+    let errorMessages = [];
 
-    rows.forEach((row, index) => {
-      const from = row.querySelector('.s-from').value.trim();
-      const to = row.querySelector('.s-to').value.trim();
-      const depart = row.querySelector('.s-depart').value;
-
-      if (!from || !to || !depart) {
-        isValid = false;
-        if (!firstEmptyField) {
-          if (!from) firstEmptyField = row.querySelector('.s-from');
-          else if (!to) firstEmptyField = row.querySelector('.s-to');
-          else firstEmptyField = row.querySelector('.s-depart');
-        }
-      }
-
-      flightData.push({
-        segment: index + 1,
-        from: from,
-        to: to,
-        depart: depart
-      });
+    // Clear previous error highlights
+    document.querySelectorAll('.s-from, .s-to, .s-depart').forEach(el => {
+      el.style.border = '';
+      el.style.boxShadow = '';
     });
 
-    // Get return date if applicable
-    const returnDate = document.getElementById('s-return').value;
+    rows.forEach((row, index) => {
+      const fromEl = row.querySelector('.s-from');
+      const toEl = row.querySelector('.s-to');
+      const departEl = row.querySelector('.s-depart');
 
-    // Validate
+      const from = fromEl.value.trim();
+      const to = toEl.value.trim();
+      const depart = departEl.value;
+
+      const label = rows.length > 1 ? ` (Flight ${index + 1})` : '';
+
+      if (!from) {
+        fromEl.style.border = '2px solid #ef4444';
+        fromEl.style.boxShadow = '0 0 0 3px rgba(239,68,68,0.15)';
+        errorMessages.push(`Please enter departure city${label}`);
+        isValid = false;
+      }
+      if (!to) {
+        toEl.style.border = '2px solid #ef4444';
+        toEl.style.boxShadow = '0 0 0 3px rgba(239,68,68,0.15)';
+        errorMessages.push(`Please enter destination city${label}`);
+        isValid = false;
+      }
+      if (!depart) {
+        departEl.style.border = '2px solid #ef4444';
+        departEl.style.boxShadow = '0 0 0 3px rgba(239,68,68,0.15)';
+        errorMessages.push(`Please select departure date${label}`);
+        isValid = false;
+      }
+
+      flightData.push({ segment: index + 1, from, to, depart });
+    });
+
+    // Check return date for Return trips
+    const returnDate = document.getElementById('s-return').value;
+    if (tripType === 'Return' && !returnDate) {
+      const returnEl = document.getElementById('s-return');
+      if (returnEl) {
+        returnEl.style.border = '2px solid #ef4444';
+        returnEl.style.boxShadow = '0 0 0 3px rgba(239,68,68,0.15)';
+      }
+      errorMessages.push('Please select a return date');
+      isValid = false;
+    }
+
     if (!isValid) {
-      if (firstEmptyField) firstEmptyField.focus();
+      showToast('⚠️ ' + errorMessages[0]);
       return;
     }
 
@@ -471,7 +539,10 @@ if (searchBtn) {
     const cabinClass = cabinClassInput ? cabinClassInput.value : 'Economy';
 
     // Build email body
-    let emailBody = `Hello Ahlan-Trips Team,\n\nI'd like to book a flight:\n\n`;
+    let emailBody = `Hello Ahlan-Trips Team,\n\nI would like to request a flight booking. Here are the details:\n\n`;
+    emailBody += `=============================\n`;
+    emailBody += `FLIGHT SEARCH DETAILS\n`;
+    emailBody += `=============================\n\n`;
     emailBody += `Trip Type: ${tripType}\n`;
     emailBody += `Cabin Class: ${cabinClass}\n`;
     emailBody += `Passengers: ${adults} Adult(s)`;
@@ -479,31 +550,66 @@ if (searchBtn) {
     if (infants > 0) emailBody += `, ${infants} Infant(s)`;
     emailBody += `\n\n`;
 
-    let itemNum = 1;
     flightData.forEach((flight) => {
       if (flightData.length > 1) {
-        emailBody += `Flight ${flight.segment}:\n`;
+        emailBody += `--- Flight ${flight.segment} ---\n`;
       }
-      emailBody += `  ${itemNum++}. From: ${flight.from}\n`;
-      emailBody += `  ${itemNum++}. To: ${flight.to}\n`;
-      emailBody += `  ${itemNum++}. Departure: ${flight.depart}\n`;
+      emailBody += `From       : ${flight.from}\n`;
+      emailBody += `To         : ${flight.to}\n`;
+      emailBody += `Departure  : ${flight.depart}\n`;
       if (flightData.length > 1) emailBody += `\n`;
     });
 
     if (tripType === 'Return' && returnDate) {
-      emailBody += `  ${itemNum++}. Return: ${returnDate}\n`;
+      emailBody += `Return Date: ${returnDate}\n`;
     }
 
-    emailBody += `\nPlease contact me with available options.\n\nThank you!`;
+    emailBody += `\n=============================\n`;
+    emailBody += `Please contact me with available flight options and pricing.\n\nThank you!`;
 
-    // Send email
     const emailTo = 'info@ahlan-trips.com';
-    const subject = `Flight Booking Request - ${tripType}`;
-    const mailtoUrl = `mailto:${emailTo}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(emailBody)}`;
+    const subject = encodeURIComponent(`Flight Booking Request - ${tripType}`);
+    const body = encodeURIComponent(emailBody);
+    const mailtoUrl = `mailto:${emailTo}?subject=${subject}&body=${body}`;
 
-    window.location.href = mailtoUrl;
+    // Button loading state
+    const originalHTML = searchBtn.innerHTML;
+    searchBtn.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+        style="margin-right:8px;vertical-align:middle;animation:spin 1s linear infinite;">
+        <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+      </svg>
+      Opening Mail…`;
+    searchBtn.disabled = true;
+
+    // Open mail client
+    setTimeout(() => {
+      try {
+        window.location.href = mailtoUrl;
+        showToast('✅ Opening your mail client…', 'success');
+      } catch (err) {
+        showToast('⚠️ Could not open mail client. Please email info@ahlan-trips.com directly.');
+      }
+
+      // Restore button
+      setTimeout(() => {
+        searchBtn.innerHTML = originalHTML;
+        searchBtn.disabled = false;
+      }, 2000);
+    }, 300);
   });
 }
+
+/* Add spin keyframe if not present */
+(function() {
+  if (!document.getElementById('search-btn-styles')) {
+    const style = document.createElement('style');
+    style.id = 'search-btn-styles';
+    style.textContent = `@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`;
+    document.head.appendChild(style);
+  }
+})();
 
 /* ----- SCROLL FADE-UP ANIMATION ----- */
 const fadeElements = document.querySelectorAll('.fade-up');
