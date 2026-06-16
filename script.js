@@ -539,7 +539,7 @@ if (searchBtn) {
     const cabinClass = cabinClassInput ? cabinClassInput.value : 'Economy';
 
     // Build message with all details
-    let message = `FLIGHT SEARCH REQUEST\n\n`;
+    let message = `Hello Ahlan-Trips Team,\n\nI would like to request a flight booking. Here are the details:\n\n`;
     message += `Trip Type: ${tripType}\n`;
     message += `Cabin Class: ${cabinClass}\n`;
     message += `Passengers: ${adults} Adult(s)`;
@@ -561,69 +561,170 @@ if (searchBtn) {
       message += `Return Date: ${returnDate}\n`;
     }
 
-    // Button loading state
-    const originalHTML = searchBtn.innerHTML;
-    searchBtn.innerHTML = `
-      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
-        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
-        style="margin-right:8px;vertical-align:middle;animation:spin 1s linear infinite;">
-        <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
-      </svg>
-      Sending...`;
-    searchBtn.disabled = true;
+    message += `\nPlease contact me with available flight options and pricing.\n\nThank you!`;
 
-    // Send via FormSubmit.co (AJAX - no redirect, no new tab)
-    const submitData = new FormData();
-    submitData.append('email', 'info@ahlan-trips.com');
-    submitData.append('_subject', `Flight Booking Request - ${tripType}`);
-    submitData.append('message', message);
-    submitData.append('trip_type', tripType);
-    submitData.append('cabin_class', cabinClass);
-    submitData.append('passengers', `${adults} Adult(s)${children > 0 ? `, ${children} Child(ren)` : ''}${infants > 0 ? `, ${infants} Infant(s)` : ''}`);
-    submitData.append('_captcha', 'false');
-    submitData.append('_template', 'table');
+    const emailTo = 'info@ahlan-trips.com';
+    const emailSubject = `Flight Booking Request - ${tripType}`;
 
-    flightData.forEach((flight) => {
-      submitData.append(`flight_${flight.segment}_from`, flight.from);
-      submitData.append(`flight_${flight.segment}_to`, flight.to);
-      submitData.append(`flight_${flight.segment}_departure`, flight.depart);
-    });
-
-    if (tripType === 'Return' && returnDate) {
-      submitData.append('return_date', returnDate);
-    }
-
-    fetch('https://formsubmit.co/ajax/info@ahlan-trips.com', {
-      method: 'POST',
-      body: submitData
-    })
-    .then(response => response.json())
-    .then(data => {
-      if (data.success) {
-        showToast('✅ Your flight request has been sent successfully!', 'success');
-      } else {
-        throw new Error('Submission failed');
-      }
-      // Restore button
-      setTimeout(() => {
-        searchBtn.innerHTML = originalHTML;
-        searchBtn.disabled = false;
-      }, 2000);
-    })
-    .catch(error => {
-      // Fallback: try WhatsApp with the details
-      const whatsappMsg = encodeURIComponent(`Hi Ahlan-Trips! I'd like to book a flight:\n\n${message}`);
-      const whatsappUrl = `https://wa.me/21627764593?text=${whatsappMsg}`;
-      
-      if (confirm('Email service is temporarily unavailable. Would you like to send your request via WhatsApp instead?')) {
-        window.open(whatsappUrl, '_blank');
-      }
-      
-      // Restore button
-      searchBtn.innerHTML = originalHTML;
-      searchBtn.disabled = false;
-    });
+    // Open email client picker modal
+    showEmailPickerModal(emailTo, emailSubject, message);
   });
+}
+
+/* ----- EMAIL CLIENT PICKER MODAL ----- */
+function showEmailPickerModal(to, subject, body) {
+  // Remove existing modal if any
+  const existing = document.getElementById('email-picker-modal');
+  if (existing) existing.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'email-picker-modal';
+  modal.style.cssText = `
+    position: fixed; inset: 0; z-index: 100000;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);
+    animation: fadeIn 0.2s ease;
+  `;
+  modal.innerHTML = `
+    <div style="
+      background: #fff; border-radius: 16px; padding: 32px 28px;
+      max-width: 360px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      text-align: center; font-family: 'Inter', sans-serif;
+      animation: slideUp 0.3s ease;
+    ">
+      <h3 style="margin: 0 0 8px; font-size: 1.2rem; color: #1a1a1a;">Send via Email</h3>
+      <p style="margin: 0 0 24px; font-size: 0.9rem; color: #666;">Choose your email app to send the booking request:</p>
+      
+      <button id="pick-gmail" style="
+        display: flex; align-items: center; justify-content: center; gap: 12px;
+        width: 100%; padding: 14px 20px; margin-bottom: 12px;
+        background: #fff; border: 2px solid #e2e8f0; border-radius: 12px;
+        font-size: 1rem; font-weight: 600; color: #1a1a1a; cursor: pointer;
+        transition: all 0.2s ease;
+      " onmouseover="this.style.borderColor='#EA4335';this.style.background='#fef2f2'" onmouseout="this.style.borderColor='#e2e8f0';this.style.background='#fff'">
+        <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6zm-2 0l-8 5-8-5h16zm0 12H4V8l8 5 8-5v10z" fill="#EA4335"/>
+        </svg>
+        Gmail
+      </button>
+
+      <button id="pick-outlook" style="
+        display: flex; align-items: center; justify-content: center; gap: 12px;
+        width: 100%; padding: 14px 20px; margin-bottom: 12px;
+        background: #fff; border: 2px solid #e2e8f0; border-radius: 12px;
+        font-size: 1rem; font-weight: 600; color: #1a1a1a; cursor: pointer;
+        transition: all 0.2s ease;
+      " onmouseover="this.style.borderColor='#0078D4';this.style.background='#f0f7ff'" onmouseout="this.style.borderColor='#e2e8f0';this.style.background='#fff'">
+        <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6zm-2 0l-8 5-8-5h16zm0 12H4V8l8 5 8-5v10z" fill="#0078D4"/>
+        </svg>
+        Outlook
+      </button>
+
+      <button id="pick-yahoo" style="
+        display: flex; align-items: center; justify-content: center; gap: 12px;
+        width: 100%; padding: 14px 20px; margin-bottom: 12px;
+        background: #fff; border: 2px solid #e2e8f0; border-radius: 12px;
+        font-size: 1rem; font-weight: 600; color: #1a1a1a; cursor: pointer;
+        transition: all 0.2s ease;
+      " onmouseover="this.style.borderColor='#6001D2';this.style.background='#f5f0ff'" onmouseout="this.style.borderColor='#e2e8f0';this.style.background='#fff'">
+        <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6zm-2 0l-8 5-8-5h16zm0 12H4V8l8 5 8-5v10z" fill="#6001D2"/>
+        </svg>
+        Yahoo Mail
+      </button>
+
+      <button id="pick-default" style="
+        display: flex; align-items: center; justify-content: center; gap: 12px;
+        width: 100%; padding: 14px 20px; margin-bottom: 16px;
+        background: #fff; border: 2px solid #e2e8f0; border-radius: 12px;
+        font-size: 1rem; font-weight: 600; color: #1a1a1a; cursor: pointer;
+        transition: all 0.2s ease;
+      " onmouseover="this.style.borderColor='#ff6b00';this.style.background='#fff8f3'" onmouseout="this.style.borderColor='#e2e8f0';this.style.background='#fff'">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ff6b00" stroke-width="2" xmlns="http://www.w3.org/2000/svg">
+          <rect x="2" y="4" width="20" height="16" rx="2"/>
+          <polyline points="22,6 12,13 2,6"/>
+        </svg>
+        Default Email App
+      </button>
+
+      <button id="pick-cancel" style="
+        width: 100%; padding: 10px; background: none; border: none;
+        font-size: 0.85rem; color: #888; cursor: pointer;
+      ">Cancel</button>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  // Add fadeIn/slideUp animations
+  if (!document.getElementById('email-picker-styles')) {
+    const style = document.createElement('style');
+    style.id = 'email-picker-styles';
+    style.textContent = `
+      @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+      @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    `;
+    document.head.appendChild(style);
+  }
+
+  const encodedSubject = encodeURIComponent(subject);
+  const encodedBody = encodeURIComponent(body);
+  const encodedTo = encodeURIComponent(to);
+
+  // Gmail compose URL
+  document.getElementById('pick-gmail').addEventListener('click', () => {
+    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodedTo}&su=${encodedSubject}&body=${encodedBody}`;
+    window.open(gmailUrl, '_blank');
+    closeEmailPicker();
+    showToast('✅ Gmail compose opened!', 'success');
+  });
+
+  // Outlook compose URL
+  document.getElementById('pick-outlook').addEventListener('click', () => {
+    const outlookUrl = `https://outlook.live.com/mail/0/deeplink/compose?to=${encodedTo}&subject=${encodedSubject}&body=${encodedBody}`;
+    window.open(outlookUrl, '_blank');
+    closeEmailPicker();
+    showToast('✅ Outlook compose opened!', 'success');
+  });
+
+  // Yahoo Mail compose URL
+  document.getElementById('pick-yahoo').addEventListener('click', () => {
+    const yahooUrl = `https://compose.mail.yahoo.com/?to=${encodedTo}&subject=${encodedSubject}&body=${encodedBody}`;
+    window.open(yahooUrl, '_blank');
+    closeEmailPicker();
+    showToast('✅ Yahoo Mail compose opened!', 'success');
+  });
+
+  // Default mail app (mailto)
+  document.getElementById('pick-default').addEventListener('click', () => {
+    window.location.href = `mailto:${to}?subject=${encodedSubject}&body=${encodedBody}`;
+    closeEmailPicker();
+    showToast('✅ Opening your default email app…', 'success');
+  });
+
+  // Cancel
+  document.getElementById('pick-cancel').addEventListener('click', closeEmailPicker);
+  
+  // Close on backdrop click
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) closeEmailPicker();
+  });
+
+  // Close on Escape
+  document.addEventListener('keydown', function escHandler(e) {
+    if (e.key === 'Escape') {
+      closeEmailPicker();
+      document.removeEventListener('keydown', escHandler);
+    }
+  });
+}
+
+function closeEmailPicker() {
+  const modal = document.getElementById('email-picker-modal');
+  if (modal) {
+    modal.style.opacity = '0';
+    setTimeout(() => modal.remove(), 200);
+  }
 }
 
 /* Add spin keyframe if not present */
@@ -697,7 +798,7 @@ if (trustSection) {
   countObserver.observe(trustSection);
 }
 
-/* ----- CONTACT FORM (FormSubmit - no redirect) ----- */
+/* ----- CONTACT FORM (Email Picker) ----- */
 const enquiryForm = document.getElementById('enquiry-form');
 if (enquiryForm) {
   enquiryForm.addEventListener('submit', (e) => {
@@ -712,50 +813,20 @@ if (enquiryForm) {
 
     if (!name || !email || !message) return;
 
-    const btn = enquiryForm.querySelector('button[type="submit"]');
-    const originalText = btn.textContent;
-    btn.textContent = 'Sending...';
-    btn.disabled = true;
+    const emailTo = 'info@ahlan-trips.com';
+    const subject = `Ahlan-Trips Enquiry: ${name} (${company})`;
+    
+    let body = `Hello Ahlan-Trips Team,\n\n`;
+    body += `I am interested in your corporate travel solutions. Here are my details:\n\n`;
+    body += `Name: ${name}\n`;
+    body += `Company: ${company}\n`;
+    body += `Work Email: ${email}\n`;
+    body += `Phone: ${phone}\n`;
+    body += `Primary Region: ${region}\n\n`;
+    body += `Message:\n${message}\n\n`;
+    body += `--- Sent from Ahlan-Trips Website ---`;
 
-    // Send via FormSubmit.co (AJAX - no redirect, no new tab)
-    const submitData = new FormData();
-    submitData.append('email', 'info@ahlan-trips.com');
-    submitData.append('_subject', `Ahlan-Trips Enquiry: ${name} (${company})`);
-    submitData.append('name', name);
-    submitData.append('company', company);
-    submitData.append('work_email', email);
-    submitData.append('phone', phone);
-    submitData.append('region', region);
-    submitData.append('message', message);
-    submitData.append('_captcha', 'false');
-    submitData.append('_template', 'table');
-
-    fetch('https://formsubmit.co/ajax/info@ahlan-trips.com', {
-      method: 'POST',
-      body: submitData
-    })
-    .then(response => response.json())
-    .then(data => {
-      if (data.success) {
-        showToast('✅ Your enquiry has been sent successfully! We\'ll get back to you soon.', 'success');
-        enquiryForm.reset();
-      } else {
-        throw new Error('Submission failed');
-      }
-      btn.textContent = originalText;
-      btn.disabled = false;
-    })
-    .catch(error => {
-      const whatsappMsg = encodeURIComponent(`Hi Ahlan-Trips!\n\nName: ${name}\nCompany: ${company}\nEmail: ${email}\nPhone: ${phone}\nRegion: ${region}\n\nMessage: ${message}`);
-      const whatsappUrl = `https://wa.me/21627764593?text=${whatsappMsg}`;
-      
-      if (confirm('Email service is temporarily unavailable. Would you like to send your enquiry via WhatsApp instead?')) {
-        window.open(whatsappUrl, '_blank');
-      }
-      
-      btn.textContent = originalText;
-      btn.disabled = false;
-    });
+    showEmailPickerModal(emailTo, subject, body);
   });
 }
 
