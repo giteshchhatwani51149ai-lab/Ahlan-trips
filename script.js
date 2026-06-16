@@ -538,39 +538,28 @@ if (searchBtn) {
     const cabinClassInput = document.querySelector('input[name="cabin-class"]:checked');
     const cabinClass = cabinClassInput ? cabinClassInput.value : 'Economy';
 
-    // Build email body
-    let emailBody = `Hello Ahlan-Trips Team,\n\nI would like to request a flight booking. Here are the details:\n\n`;
-    emailBody += `=============================\n`;
-    emailBody += `FLIGHT SEARCH DETAILS\n`;
-    emailBody += `=============================\n\n`;
-    emailBody += `Trip Type: ${tripType}\n`;
-    emailBody += `Cabin Class: ${cabinClass}\n`;
-    emailBody += `Passengers: ${adults} Adult(s)`;
-    if (children > 0) emailBody += `, ${children} Child(ren)`;
-    if (infants > 0) emailBody += `, ${infants} Infant(s)`;
-    emailBody += `\n\n`;
+    // Build message with all details
+    let message = `FLIGHT SEARCH REQUEST\n\n`;
+    message += `Trip Type: ${tripType}\n`;
+    message += `Cabin Class: ${cabinClass}\n`;
+    message += `Passengers: ${adults} Adult(s)`;
+    if (children > 0) message += `, ${children} Child(ren)`;
+    if (infants > 0) message += `, ${infants} Infant(s)`;
+    message += `\n\n`;
 
     flightData.forEach((flight) => {
       if (flightData.length > 1) {
-        emailBody += `--- Flight ${flight.segment} ---\n`;
+        message += `--- Flight ${flight.segment} ---\n`;
       }
-      emailBody += `From       : ${flight.from}\n`;
-      emailBody += `To         : ${flight.to}\n`;
-      emailBody += `Departure  : ${flight.depart}\n`;
-      if (flightData.length > 1) emailBody += `\n`;
+      message += `From: ${flight.from}\n`;
+      message += `To: ${flight.to}\n`;
+      message += `Departure: ${flight.depart}\n`;
+      if (flightData.length > 1) message += `\n`;
     });
 
     if (tripType === 'Return' && returnDate) {
-      emailBody += `Return Date: ${returnDate}\n`;
+      message += `Return Date: ${returnDate}\n`;
     }
-
-    emailBody += `\n=============================\n`;
-    emailBody += `Please contact me with available flight options and pricing.\n\nThank you!`;
-
-    const emailTo = 'info@ahlan-trips.com';
-    const subject = encodeURIComponent(`Flight Booking Request - ${tripType}`);
-    const body = encodeURIComponent(emailBody);
-    const mailtoUrl = `mailto:${emailTo}?subject=${subject}&body=${body}`;
 
     // Button loading state
     const originalHTML = searchBtn.innerHTML;
@@ -580,34 +569,60 @@ if (searchBtn) {
         style="margin-right:8px;vertical-align:middle;animation:spin 1s linear infinite;">
         <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
       </svg>
-      Opening Mail…`;
+      Sending...`;
     searchBtn.disabled = true;
 
-    // Open mail client
-    setTimeout(() => {
-      try {
-        // Try window.open first for better mobile compatibility
-        const mailWindow = window.open(mailtoUrl, '_self');
-        if (!mailWindow) {
-          window.location.href = mailtoUrl;
-        }
-        showToast('✅ Opening your mail client…', 'success');
-      } catch (err) {
-        // Direct fallback
-        try {
-          window.location.href = mailtoUrl;
-          showToast('✅ Opening your mail client…', 'success');
-        } catch (err2) {
-          showToast('⚠️ Could not open mail client. Please email info@ahlan-trips.com directly.');
-        }
-      }
+    // Send via FormSubmit.co (AJAX - no redirect, no new tab)
+    const submitData = new FormData();
+    submitData.append('email', 'info@ahlan-trips.com');
+    submitData.append('_subject', `Flight Booking Request - ${tripType}`);
+    submitData.append('message', message);
+    submitData.append('trip_type', tripType);
+    submitData.append('cabin_class', cabinClass);
+    submitData.append('passengers', `${adults} Adult(s)${children > 0 ? `, ${children} Child(ren)` : ''}${infants > 0 ? `, ${infants} Infant(s)` : ''}`);
+    submitData.append('_captcha', 'false');
+    submitData.append('_template', 'table');
 
+    flightData.forEach((flight) => {
+      submitData.append(`flight_${flight.segment}_from`, flight.from);
+      submitData.append(`flight_${flight.segment}_to`, flight.to);
+      submitData.append(`flight_${flight.segment}_departure`, flight.depart);
+    });
+
+    if (tripType === 'Return' && returnDate) {
+      submitData.append('return_date', returnDate);
+    }
+
+    fetch('https://formsubmit.co/ajax/info@ahlan-trips.com', {
+      method: 'POST',
+      body: submitData
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        showToast('✅ Your flight request has been sent successfully!', 'success');
+      } else {
+        throw new Error('Submission failed');
+      }
       // Restore button
       setTimeout(() => {
         searchBtn.innerHTML = originalHTML;
         searchBtn.disabled = false;
       }, 2000);
-    }, 300);
+    })
+    .catch(error => {
+      // Fallback: try WhatsApp with the details
+      const whatsappMsg = encodeURIComponent(`Hi Ahlan-Trips! I'd like to book a flight:\n\n${message}`);
+      const whatsappUrl = `https://wa.me/21627764593?text=${whatsappMsg}`;
+      
+      if (confirm('Email service is temporarily unavailable. Would you like to send your request via WhatsApp instead?')) {
+        window.open(whatsappUrl, '_blank');
+      }
+      
+      // Restore button
+      searchBtn.innerHTML = originalHTML;
+      searchBtn.disabled = false;
+    });
   });
 }
 
@@ -682,7 +697,7 @@ if (trustSection) {
   countObserver.observe(trustSection);
 }
 
-/* ----- CONTACT FORM (Email Redirect) ----- */
+/* ----- CONTACT FORM (FormSubmit - no redirect) ----- */
 const enquiryForm = document.getElementById('enquiry-form');
 if (enquiryForm) {
   enquiryForm.addEventListener('submit', (e) => {
@@ -697,32 +712,50 @@ if (enquiryForm) {
 
     if (!name || !email || !message) return;
 
-    const recipient = "info@ahlan-trips.com";
-    const subject = `Ahlan-Trips Enquiry: ${name} (${company})`;
-    
-    let body = `Hello Ahlan-Trips Team,\n\n`;
-    body += `I am interested in your corporate travel solutions. Here are my details:\n\n`;
-    body += `👤 Name: ${name}\n`;
-    body += `🏢 Company: ${company}\n`;
-    body += `📧 Work Email: ${email}\n`;
-    body += `📞 Phone: ${phone}\n`;
-    body += `🌍 Primary Region: ${region}\n\n`;
-    body += `💬 Message:\n${message}\n\n`;
-    body += `--- Sent from Ahlan-Trips Website ---`;
-
-    const mailtoUrl = `mailto:${recipient}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    
-    // Smooth transition
     const btn = enquiryForm.querySelector('button[type="submit"]');
     const originalText = btn.textContent;
-    btn.textContent = 'Opening Mail Client…';
+    btn.textContent = 'Sending...';
     btn.disabled = true;
 
-    setTimeout(() => {
-      window.location.href = mailtoUrl;
+    // Send via FormSubmit.co (AJAX - no redirect, no new tab)
+    const submitData = new FormData();
+    submitData.append('email', 'info@ahlan-trips.com');
+    submitData.append('_subject', `Ahlan-Trips Enquiry: ${name} (${company})`);
+    submitData.append('name', name);
+    submitData.append('company', company);
+    submitData.append('work_email', email);
+    submitData.append('phone', phone);
+    submitData.append('region', region);
+    submitData.append('message', message);
+    submitData.append('_captcha', 'false');
+    submitData.append('_template', 'table');
+
+    fetch('https://formsubmit.co/ajax/info@ahlan-trips.com', {
+      method: 'POST',
+      body: submitData
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        showToast('✅ Your enquiry has been sent successfully! We\'ll get back to you soon.', 'success');
+        enquiryForm.reset();
+      } else {
+        throw new Error('Submission failed');
+      }
       btn.textContent = originalText;
       btn.disabled = false;
-    }, 800);
+    })
+    .catch(error => {
+      const whatsappMsg = encodeURIComponent(`Hi Ahlan-Trips!\n\nName: ${name}\nCompany: ${company}\nEmail: ${email}\nPhone: ${phone}\nRegion: ${region}\n\nMessage: ${message}`);
+      const whatsappUrl = `https://wa.me/21627764593?text=${whatsappMsg}`;
+      
+      if (confirm('Email service is temporarily unavailable. Would you like to send your enquiry via WhatsApp instead?')) {
+        window.open(whatsappUrl, '_blank');
+      }
+      
+      btn.textContent = originalText;
+      btn.disabled = false;
+    });
   });
 }
 
