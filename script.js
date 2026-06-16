@@ -586,10 +586,20 @@ if (searchBtn) {
     // Open mail client
     setTimeout(() => {
       try {
-        window.location.href = mailtoUrl;
+        // Try window.open first for better mobile compatibility
+        const mailWindow = window.open(mailtoUrl, '_self');
+        if (!mailWindow) {
+          window.location.href = mailtoUrl;
+        }
         showToast('✅ Opening your mail client…', 'success');
       } catch (err) {
-        showToast('⚠️ Could not open mail client. Please email info@ahlan-trips.com directly.');
+        // Direct fallback
+        try {
+          window.location.href = mailtoUrl;
+          showToast('✅ Opening your mail client…', 'success');
+        } catch (err2) {
+          showToast('⚠️ Could not open mail client. Please email info@ahlan-trips.com directly.');
+        }
       }
 
       // Restore button

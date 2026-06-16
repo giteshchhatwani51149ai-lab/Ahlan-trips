@@ -676,7 +676,7 @@
           <p class="slide-subtitle">Enter your travel details and we'll find the best deals for you.</p>
           
           <div class="search-form-container">
-            <form id="flightSearchForm" action="https://formspree.io/f/xnqkqgqj" method="POST">
+            <form id="flightSearchForm">
               <input type="hidden" name="_subject" value="New Flight Search - Instagram Bio">
               
               <div class="search-tabs">
@@ -1102,69 +1102,67 @@
       }
     });
 
-    // Form Submit Handler with fallback
+    // Form Submit Handler - sends email to info@ahlan-trips.com
     document.getElementById('flightSearchForm').addEventListener('submit', function(e) {
       e.preventDefault();
       
       const form = this;
       const formData = new FormData(form);
       
-      // Try to submit via Formspree
-      fetch(form.action, {
-        method: 'POST',
-        body: formData,
-        headers: { 'Accept': 'application/json' }
-      }).then(response => {
-        if (response.ok) {
-          // Show success
-          form.style.display = 'none';
-          document.getElementById('successMessage').classList.add('show');
-        } else {
-          // Fallback: open email client
-          openEmailClient(formData);
-        }
-      }).catch(error => {
-        // Fallback: open email client
-        openEmailClient(formData);
-      });
-    });
+      const tripType = formData.get('trip_type') || 'One Way';
+      const from = formData.get('from_city') || '';
+      const to = formData.get('to_city') || '';
+      const depart = formData.get('depart_date') || '';
+      const returnDate = formData.get('return_date') || '';
 
-    // Fallback: Open email client with form data
-    function openEmailClient(formData) {
-      const tripType = formData.get('trip_type');
-      const from = formData.get('from_city');
-      const to = formData.get('to_city');
-      const depart = formData.get('depart_date');
-      const returnDate = formData.get('return_date') || 'N/A';
+      // Validate required fields
+      if (!from || !to || !depart) {
+        alert('Please fill in all required fields (From, To, and Departure Date).');
+        return;
+      }
       
-      let body = `Flight Search Request (from Instagram Bio)\n\n`;
+      // Build email body with all details
+      let body = `Hello Ahlan-Trips Team,\n\n`;
+      body += `I would like to request a flight booking. Here are the details:\n\n`;
+      body += `=============================\n`;
+      body += `FLIGHT SEARCH REQUEST\n`;
+      body += `=============================\n\n`;
       body += `Trip Type: ${tripType}\n`;
       body += `From: ${from}\n`;
       body += `To: ${to}\n`;
-      body += `Depart: ${depart}\n`;
-      if (tripType === 'Return') {
-        body += `Return: ${returnDate}\n`;
+      body += `Departure Date: ${depart}\n`;
+      
+      if (tripType === 'Return' && returnDate) {
+        body += `Return Date: ${returnDate}\n`;
       }
       
       // Add multi-city segments if any
       let segmentCount = 1;
       while (formData.get(`multicity_from_${segmentCount}`)) {
-        body += `\nFlight ${segmentCount + 1}:\n`;
+        body += `\n--- Flight ${segmentCount + 1} ---\n`;
         body += `From: ${formData.get(`multicity_from_${segmentCount}`)}\n`;
         body += `To: ${formData.get(`multicity_to_${segmentCount}`)}\n`;
         body += `Date: ${formData.get(`multicity_date_${segmentCount}`)}\n`;
         segmentCount++;
       }
       
-      const mailtoLink = `mailto:info@ahlan-trips.com?subject=New Flight Search - Instagram Bio&body=${encodeURIComponent(body)}`;
-      window.location.href = mailtoLink;
+      body += `\n=============================\n`;
+      body += `Please contact me with available flight options and pricing.\n\nThank you!`;
+
+      const emailTo = 'info@ahlan-trips.com';
+      const subject = encodeURIComponent(`Flight Booking Request - ${tripType} - ${from} to ${to}`);
+      const emailBody = encodeURIComponent(body);
+      const mailtoUrl = `mailto:${emailTo}?subject=${subject}&body=${emailBody}`;
+
+      // Open mail client
+      window.location.href = mailtoUrl;
       
-      // Show message after a delay
+      // Show success message after a short delay
       setTimeout(() => {
-        document.getElementById('flightSearchForm').style.display = 'none';
+        form.style.display = 'none';
         document.getElementById('successMessage').classList.add('show');
-      }, 2000);
-    }
+      }, 1500);
+    });
 
     // Keyboard Navigation
     document.addEventListener('keydown', (e) => {
