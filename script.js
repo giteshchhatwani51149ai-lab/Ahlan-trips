@@ -538,67 +538,193 @@ if (searchBtn) {
     const cabinClassInput = document.querySelector('input[name="cabin-class"]:checked');
     const cabinClass = cabinClassInput ? cabinClassInput.value : 'Economy';
 
-    // Build email body
-    let emailBody = `Hello Ahlan-Trips Team,\n\nI would like to request a flight booking. Here are the details:\n\n`;
-    emailBody += `=============================\n`;
-    emailBody += `FLIGHT SEARCH DETAILS\n`;
-    emailBody += `=============================\n\n`;
-    emailBody += `Trip Type: ${tripType}\n`;
-    emailBody += `Cabin Class: ${cabinClass}\n`;
-    emailBody += `Passengers: ${adults} Adult(s)`;
-    if (children > 0) emailBody += `, ${children} Child(ren)`;
-    if (infants > 0) emailBody += `, ${infants} Infant(s)`;
-    emailBody += `\n\n`;
+    // Build message with all details
+    let message = `Hello Ahlan-Trips Team,\n\nI would like to request a flight booking. Here are the details:\n\n`;
+    message += `Trip Type: ${tripType}\n`;
+    message += `Cabin Class: ${cabinClass}\n`;
+    message += `Passengers: ${adults} Adult(s)`;
+    if (children > 0) message += `, ${children} Child(ren)`;
+    if (infants > 0) message += `, ${infants} Infant(s)`;
+    message += `\n\n`;
 
     flightData.forEach((flight) => {
       if (flightData.length > 1) {
-        emailBody += `--- Flight ${flight.segment} ---\n`;
+        message += `--- Flight ${flight.segment} ---\n`;
       }
-      emailBody += `From       : ${flight.from}\n`;
-      emailBody += `To         : ${flight.to}\n`;
-      emailBody += `Departure  : ${flight.depart}\n`;
-      if (flightData.length > 1) emailBody += `\n`;
+      message += `From: ${flight.from}\n`;
+      message += `To: ${flight.to}\n`;
+      message += `Departure: ${flight.depart}\n`;
+      if (flightData.length > 1) message += `\n`;
     });
 
     if (tripType === 'Return' && returnDate) {
-      emailBody += `Return Date: ${returnDate}\n`;
+      message += `Return Date: ${returnDate}\n`;
     }
 
-    emailBody += `\n=============================\n`;
-    emailBody += `Please contact me with available flight options and pricing.\n\nThank you!`;
+    message += `\nPlease contact me with available flight options and pricing.\n\nThank you!`;
 
     const emailTo = 'info@ahlan-trips.com';
-    const subject = encodeURIComponent(`Flight Booking Request - ${tripType}`);
-    const body = encodeURIComponent(emailBody);
-    const mailtoUrl = `mailto:${emailTo}?subject=${subject}&body=${body}`;
+    const emailSubject = `Flight Booking Request - ${tripType}`;
 
-    // Button loading state
-    const originalHTML = searchBtn.innerHTML;
-    searchBtn.innerHTML = `
-      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
-        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
-        style="margin-right:8px;vertical-align:middle;animation:spin 1s linear infinite;">
-        <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
-      </svg>
-      Opening Mail…`;
-    searchBtn.disabled = true;
-
-    // Open mail client
-    setTimeout(() => {
-      try {
-        window.location.href = mailtoUrl;
-        showToast('✅ Opening your mail client…', 'success');
-      } catch (err) {
-        showToast('⚠️ Could not open mail client. Please email info@ahlan-trips.com directly.');
-      }
-
-      // Restore button
-      setTimeout(() => {
-        searchBtn.innerHTML = originalHTML;
-        searchBtn.disabled = false;
-      }, 2000);
-    }, 300);
+    // Open email client picker modal
+    showEmailPickerModal(emailTo, emailSubject, message);
   });
+}
+
+/* ----- EMAIL CLIENT PICKER MODAL ----- */
+function showEmailPickerModal(to, subject, body) {
+  // Remove existing modal if any
+  const existing = document.getElementById('email-picker-modal');
+  if (existing) existing.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'email-picker-modal';
+  modal.style.cssText = `
+    position: fixed; inset: 0; z-index: 100000;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);
+    animation: fadeIn 0.2s ease;
+  `;
+  modal.innerHTML = `
+    <div style="
+      background: #fff; border-radius: 16px; padding: 32px 28px;
+      max-width: 360px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      text-align: center; font-family: 'Inter', sans-serif;
+      animation: slideUp 0.3s ease;
+    ">
+      <h3 style="margin: 0 0 8px; font-size: 1.2rem; color: #1a1a1a;">Send via Email</h3>
+      <p style="margin: 0 0 24px; font-size: 0.9rem; color: #666;">Choose your email app to send the booking request:</p>
+      
+      <button id="pick-gmail" style="
+        display: flex; align-items: center; justify-content: center; gap: 12px;
+        width: 100%; padding: 14px 20px; margin-bottom: 12px;
+        background: #fff; border: 2px solid #e2e8f0; border-radius: 12px;
+        font-size: 1rem; font-weight: 600; color: #1a1a1a; cursor: pointer;
+        transition: all 0.2s ease;
+      " onmouseover="this.style.borderColor='#EA4335';this.style.background='#fef2f2'" onmouseout="this.style.borderColor='#e2e8f0';this.style.background='#fff'">
+        <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6zm-2 0l-8 5-8-5h16zm0 12H4V8l8 5 8-5v10z" fill="#EA4335"/>
+        </svg>
+        Gmail
+      </button>
+
+      <button id="pick-outlook" style="
+        display: flex; align-items: center; justify-content: center; gap: 12px;
+        width: 100%; padding: 14px 20px; margin-bottom: 12px;
+        background: #fff; border: 2px solid #e2e8f0; border-radius: 12px;
+        font-size: 1rem; font-weight: 600; color: #1a1a1a; cursor: pointer;
+        transition: all 0.2s ease;
+      " onmouseover="this.style.borderColor='#0078D4';this.style.background='#f0f7ff'" onmouseout="this.style.borderColor='#e2e8f0';this.style.background='#fff'">
+        <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6zm-2 0l-8 5-8-5h16zm0 12H4V8l8 5 8-5v10z" fill="#0078D4"/>
+        </svg>
+        Outlook
+      </button>
+
+      <button id="pick-yahoo" style="
+        display: flex; align-items: center; justify-content: center; gap: 12px;
+        width: 100%; padding: 14px 20px; margin-bottom: 12px;
+        background: #fff; border: 2px solid #e2e8f0; border-radius: 12px;
+        font-size: 1rem; font-weight: 600; color: #1a1a1a; cursor: pointer;
+        transition: all 0.2s ease;
+      " onmouseover="this.style.borderColor='#6001D2';this.style.background='#f5f0ff'" onmouseout="this.style.borderColor='#e2e8f0';this.style.background='#fff'">
+        <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6zm-2 0l-8 5-8-5h16zm0 12H4V8l8 5 8-5v10z" fill="#6001D2"/>
+        </svg>
+        Yahoo Mail
+      </button>
+
+      <button id="pick-default" style="
+        display: flex; align-items: center; justify-content: center; gap: 12px;
+        width: 100%; padding: 14px 20px; margin-bottom: 16px;
+        background: #fff; border: 2px solid #e2e8f0; border-radius: 12px;
+        font-size: 1rem; font-weight: 600; color: #1a1a1a; cursor: pointer;
+        transition: all 0.2s ease;
+      " onmouseover="this.style.borderColor='#ff6b00';this.style.background='#fff8f3'" onmouseout="this.style.borderColor='#e2e8f0';this.style.background='#fff'">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ff6b00" stroke-width="2" xmlns="http://www.w3.org/2000/svg">
+          <rect x="2" y="4" width="20" height="16" rx="2"/>
+          <polyline points="22,6 12,13 2,6"/>
+        </svg>
+        Default Email App
+      </button>
+
+      <button id="pick-cancel" style="
+        width: 100%; padding: 10px; background: none; border: none;
+        font-size: 0.85rem; color: #888; cursor: pointer;
+      ">Cancel</button>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  // Add fadeIn/slideUp animations
+  if (!document.getElementById('email-picker-styles')) {
+    const style = document.createElement('style');
+    style.id = 'email-picker-styles';
+    style.textContent = `
+      @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+      @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    `;
+    document.head.appendChild(style);
+  }
+
+  const encodedSubject = encodeURIComponent(subject);
+  const encodedBody = encodeURIComponent(body);
+  const encodedTo = encodeURIComponent(to);
+
+  // Gmail compose URL
+  document.getElementById('pick-gmail').addEventListener('click', () => {
+    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodedTo}&su=${encodedSubject}&body=${encodedBody}`;
+    window.open(gmailUrl, '_blank');
+    closeEmailPicker();
+    showToast('✅ Gmail compose opened!', 'success');
+  });
+
+  // Outlook compose URL
+  document.getElementById('pick-outlook').addEventListener('click', () => {
+    const outlookUrl = `https://outlook.live.com/mail/0/deeplink/compose?to=${encodedTo}&subject=${encodedSubject}&body=${encodedBody}`;
+    window.open(outlookUrl, '_blank');
+    closeEmailPicker();
+    showToast('✅ Outlook compose opened!', 'success');
+  });
+
+  // Yahoo Mail compose URL
+  document.getElementById('pick-yahoo').addEventListener('click', () => {
+    const yahooUrl = `https://compose.mail.yahoo.com/?to=${encodedTo}&subject=${encodedSubject}&body=${encodedBody}`;
+    window.open(yahooUrl, '_blank');
+    closeEmailPicker();
+    showToast('✅ Yahoo Mail compose opened!', 'success');
+  });
+
+  // Default mail app (mailto)
+  document.getElementById('pick-default').addEventListener('click', () => {
+    window.location.href = `mailto:${to}?subject=${encodedSubject}&body=${encodedBody}`;
+    closeEmailPicker();
+    showToast('✅ Opening your default email app…', 'success');
+  });
+
+  // Cancel
+  document.getElementById('pick-cancel').addEventListener('click', closeEmailPicker);
+  
+  // Close on backdrop click
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) closeEmailPicker();
+  });
+
+  // Close on Escape
+  document.addEventListener('keydown', function escHandler(e) {
+    if (e.key === 'Escape') {
+      closeEmailPicker();
+      document.removeEventListener('keydown', escHandler);
+    }
+  });
+}
+
+function closeEmailPicker() {
+  const modal = document.getElementById('email-picker-modal');
+  if (modal) {
+    modal.style.opacity = '0';
+    setTimeout(() => modal.remove(), 200);
+  }
 }
 
 /* Add spin keyframe if not present */
@@ -672,7 +798,7 @@ if (trustSection) {
   countObserver.observe(trustSection);
 }
 
-/* ----- CONTACT FORM (Email Redirect) ----- */
+/* ----- CONTACT FORM (Email Picker) ----- */
 const enquiryForm = document.getElementById('enquiry-form');
 if (enquiryForm) {
   enquiryForm.addEventListener('submit', (e) => {
@@ -687,32 +813,20 @@ if (enquiryForm) {
 
     if (!name || !email || !message) return;
 
-    const recipient = "info@ahlan-trips.com";
+    const emailTo = 'info@ahlan-trips.com';
     const subject = `Ahlan-Trips Enquiry: ${name} (${company})`;
     
     let body = `Hello Ahlan-Trips Team,\n\n`;
     body += `I am interested in your corporate travel solutions. Here are my details:\n\n`;
-    body += `👤 Name: ${name}\n`;
-    body += `🏢 Company: ${company}\n`;
-    body += `📧 Work Email: ${email}\n`;
-    body += `📞 Phone: ${phone}\n`;
-    body += `🌍 Primary Region: ${region}\n\n`;
-    body += `💬 Message:\n${message}\n\n`;
+    body += `Name: ${name}\n`;
+    body += `Company: ${company}\n`;
+    body += `Work Email: ${email}\n`;
+    body += `Phone: ${phone}\n`;
+    body += `Primary Region: ${region}\n\n`;
+    body += `Message:\n${message}\n\n`;
     body += `--- Sent from Ahlan-Trips Website ---`;
 
-    const mailtoUrl = `mailto:${recipient}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    
-    // Smooth transition
-    const btn = enquiryForm.querySelector('button[type="submit"]');
-    const originalText = btn.textContent;
-    btn.textContent = 'Opening Mail Client…';
-    btn.disabled = true;
-
-    setTimeout(() => {
-      window.location.href = mailtoUrl;
-      btn.textContent = originalText;
-      btn.disabled = false;
-    }, 800);
+    showEmailPickerModal(emailTo, subject, body);
   });
 }
 
